@@ -25,6 +25,7 @@ Custom canvas item for track object keyframe curves."""
 from gi.repository import GooCanvas
 from gi.repository import GObject
 from gi.repository import Gtk
+from gi.repository import Gdk
 
 from pitivi.utils.receiver import receiver, handler
 from pitivi.utils.timeline import View, Controller, Zoomable

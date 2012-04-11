@@ -100,23 +100,27 @@ def _init_gobject_gtk_gst_ges():
         gi.require_version('Gtk', '3.0')
 
         from gi.repository import Gtk
-
+        from gi.repository import GLib
         from gi.repository import GObject
-        GObject.threads_init()
+        GLib.threads_init()
     except ImportError, e:
-        raise SystemExit("PyGTK couldn't be found !", str(e))
+        raise SystemExit("GTK+ couldn't be found !", str(e))
 
-    GObject.threads_init()
 
     try:
         import gi
         gi.require_version('Gst', '1.0')
-
+      
         args, sys.argv[:] = sys.argv[:], sys.argv[0:1]
         from gi.repository import Gst
+        from gi.repository import GstPbutils
+	Gst.init(None)
+	#FIXME Hack untill GST_CLOCK_TIME_NONE = -1 and is type guint
+	Gst.CLOCK_TIME_NONE = 18446744073709551615
+	GstPbutils.pb_utils_init()
         sys.argv = args
     except ImportError:
-        raise SystemExit("Gst-Python couldn't be found!")
+        raise SystemExit("Gst or GstPbutils couldn't be found!")
 
     try:
         from gi.repository import GES

@@ -24,6 +24,8 @@ from gi.repository import GooCanvas
 from gi.repository import GES
 from gi.repository import GObject
 from gi.repository import Gtk
+from gi.repository import Gdk
+from gi.repository import GdkPixbuf
 import os.path
 from gi.repository import Pango
 import cairo
@@ -113,9 +115,26 @@ GlobalSettings.addConfigOption('clipFontColor',
 
 
 def text_size(text):
-    ink, logical = text.get_natural_extents()
-    x1, y1, x2, y2 = [Pango.PIXELS(x) for x in logical]
+    ink = Pango.Rectangle()
+    logical = Pango.Rectangle()
+    text.get_natural_extents(ink, logical)
+    #FIXME x1, y1, x2, y2 = [Pango.PIXELS(x) for x in logical]
+    return logical.width, logical.height
     return x2 - x1, y2 - y1
+
+
+def raise_to_top(item):
+    """ Mimic canvas raise(None)"""
+    parent = item.get_parent()
+    n_children = parent.get_n_children()
+    child_pos = -1
+    for i in range(n_children):
+        if parent.get_child(i) == item:
+            child_pos = i
+    if child_pos == -1:
+        self.error("Child not found")
+        return
+    parent.move_child(child_pos, n_children - 1)
 
 
 #--------------------------------------------------------------#
@@ -174,9 +193,10 @@ class TimelineController(Controller):
             self.previous_x = self.previous_x * ratio
         self.ref = Zoomable.pixelToNs(10000000000)
         self._view.app.projectManager.current.timeline.enable_update(False)
-        tx = self._view.props.parent.get_transform()
+        #TODO check for corectness
+        tx = self._view.props.parent.get_simple_transform()
         # store y offset for later priority calculation
-        self._y_offset = tx[5]
+        self._y_offset = tx[1]
         # zero y component of mousdown coordiante
         self._mousedown = Point(self._mousedown[0], 0)
 
@@ -324,9 +344,9 @@ class TrackObject(View, GooCanvas.CanvasGroup, Zoomable):
         def click(self, pos):
             timeline = self._view.timeline
             element = self._view.element
-            if self._last_event.get_state() & Gdk.ModifierType.SHIFT_MASK:
+            if self._last_event.get_state()[1] & Gdk.ModifierType.SHIFT_MASK:
                 timeline.selection.setToObj(element, SELECT_BETWEEN)
-            elif self._last_event.get_state() & Gdk.ModifierType.CONTROL_MASK:
+            elif self._last_event.get_state()[1] & Gdk.ModifierType.CONTROL_MASK:
                 if element.selected:
                     mode = UNSELECT
                 else:
@@ -444,9 +464,9 @@ class TrackObject(View, GooCanvas.CanvasGroup, Zoomable):
     def focus(self):
         self.start_handle.props.visibility = GooCanvas.CanvasItemVisibility.VISIBLE
         self.end_handle.props.visibility = GooCanvas.CanvasItemVisibility.VISIBLE
-        self.raise_(None)
+        raise_to_top(self)
         for transition in self.utrack.transitions:
-            transition.raise_(None)
+            raise_to_top(transition)
 
     def unfocus(self):
         self.start_handle.props.visibility = GooCanvas.CanvasItemVisibility.INVISIBLE
@@ -474,17 +494,13 @@ class TrackObject(View, GooCanvas.CanvasGroup, Zoomable):
             color = self.settings.videoClipBg
         if self.is_transition:
             color = 0x0089CFF0
-        pattern = unpack_cairo_gradient(color)
-        self.bg.props.fill_pattern = pattern
+        self.bg.props.fill_color_rgba = color
+        self.namebg.props.fill_color_rgba = color
 
-        self.namebg.props.fill_pattern = pattern
-
-        self._selec_indic.props.fill_pattern = unpack_cairo_pattern(
-            self.settings.selectedColor)
+        self._selec_indic.props.fill_color_rgba = self.settings.selectedColor
 
         self.name.props.font = self.settings.clipFontDesc
-        self.name.props.fill_pattern = unpack_cairo_pattern(
-            self.settings.clipFontColor)
+        self.name.props.fill_color_rgba = self.settings.clipFontColor
         twidth, theight = text_size(self.name)
         self.namewidth = twidth
         self.nameheight = theight
@@ -735,4 +751,4 @@ class Track(GooCanvas.CanvasGroup, Zoomable, Loggable):
         self.widgets[transition] = w
         self.add_child(w, 0)
         self.transitions.append(w)
-        w.raise_(None)
+        raise_to_top(w)

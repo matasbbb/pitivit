@@ -30,7 +30,7 @@ from gi.repository import Gtk
 from gi.repository import Gio
 from gi.repository import GObject
 import tarfile
-
+from fractions import Fraction
 from time import time
 from datetime import datetime
 from gettext import gettext as _
@@ -163,7 +163,6 @@ class ProjectManager(Signallable, Loggable):
                     _("Restore from backup"), Gtk.ResponseType.YES))
         dialog.set_icon_name("pitivi")
         dialog.set_resizable(False)
-        dialog.set_has_separator(False)
         dialog.set_default_response(Gtk.ResponseType.YES)
 
         primary = Gtk.Label()
@@ -483,7 +482,13 @@ class Project(Signallable, Loggable):
 
         self._dirty = False
 
-        self.timeline = GES.timeline_new_audio_video()
+        #GES bug
+        self.timeline = GES.Timeline.new()
+        tracka = GES.Track.audio_raw_new()
+        trackv = GES.Track.video_raw_new()
+        self.timeline.add_track(tracka)
+        self.timeline.add_track(trackv)
+        #self.timeline = GES.Timeline.new_audio_video()
 
         # We add a Selection to the timeline as there is currently
         # no such feature in GES

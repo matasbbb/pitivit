@@ -33,7 +33,8 @@ import re
 import sys
 from gi.repository import Gst
 from gi.repository import Pango
-
+from gi.repository import Gdk
+from fractions import Fraction
 from gettext import gettext as _
 
 from pitivi.utils.loggable import Loggable
@@ -200,7 +201,7 @@ class NumericWidget(Gtk.HBox, DynamicWidget):
         self._type = None
         if (upper != None) and (lower != None) and\
             (upper < 5000) and (lower > -5000):
-            self.slider = Gtk.HScale(self.adjustment)
+            self.slider = Gtk.HScale.new(self.adjustment)
             self.pack_start(self.slider, True, True, 0)
             self.slider.show()
             self.slider.props.draw_value = False
@@ -213,7 +214,7 @@ class NumericWidget(Gtk.HBox, DynamicWidget):
         self.adjustment.props.lower = lower
         self.adjustment.props.upper = upper
         self.spinner = Gtk.SpinButton(self.adjustment)
-        self.pack_end(self.spinner, expand=not hasattr(self, 'slider'))
+        self.pack_end(self.spinner, not hasattr(self, 'slider'), True, 0)
         self.spinner.show()
 
     def connectValueChanged(self, callback, *args):
@@ -293,7 +294,7 @@ class FractionWidget(TextWidget, DynamicWidget):
 
     def __init__(self, range=None, presets=None, default=None):
         DynamicWidget.__init__(self, default)
-
+        TextWidget.__init__(self)
         if range:
             flow = float(range.low)
             fhigh = float(range.high)
@@ -359,14 +360,14 @@ class FractionWidget(TextWidget, DynamicWidget):
         num = 1.0
         denom = 1.0
         if groups[0]:
-            num = float(groups[0])
+            num = groups[0]
         if groups[2]:
             if groups[2] == "M":
                 num = num * 1000
                 denom = 1001
             elif groups[2][1:]:
-                denom = float(groups[2][1:])
-        return Fraction(num, denom)
+                denom = groups[2][1:]
+        return Fraction(int(num), int(denom))
 
 
 class ToggleWidget(Gtk.CheckButton, DynamicWidget):
@@ -570,6 +571,7 @@ class PathWidget(Gtk.FileChooserButton, DynamicWidget):
 
     def __init__(self, action=Gtk.FileChooserAction.OPEN, default=None):
         DynamicWidget.__init__(self, default)
+        Gtk.FileChooserButton.__init__()
         self.dialog = Gtk.FileChooserDialog(
             action=action,
             buttons=(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_CLOSE,

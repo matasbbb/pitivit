@@ -122,7 +122,7 @@ def uri_is_valid(uri):
     """
     return (Gst.uri_is_valid(uri) and
             Gst.uri_get_protocol(uri) == "file" and
-            len(os.path.basename(Gst.uri_get_location(uri))) > 0)
+            len(os.path.basename(uri[7:])) > 0)
 
 
 def uri_is_reachable(uri):

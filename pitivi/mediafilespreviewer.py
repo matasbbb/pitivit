@@ -3,6 +3,7 @@ from gi.repository import GObject
 from gi.repository import Gst
 from gi.repository import Gtk
 from gi.repository import Pango
+from gi.repository import GstPbutils
 import os
 
 from gettext import gettext as _
@@ -93,8 +94,9 @@ class PreviewWidget(Gtk.VBox, Loggable):
 
         #Scale for position handling
         self.pos_adj = Gtk.Adjustment()
-        self.seeker = Gtk.HScale(self.pos_adj)
-        self.seeker.set_update_policy(Gtk.UPDATE_DISCONTINUOUS)
+        self.seeker = Gtk.HScale.new(self.pos_adj)
+        #FIXME: no introrespected function
+        #self.seeker.set_update_policy(Gtk.UPDATE_DISCONTINUOUS)
         self.seeker.connect('button-press-event', self._on_seeker_press_cb)
         self.seeker.connect('button-release-event', self._on_seeker_press_cb)
         self.seeker.connect('motion-notify-event', self._on_motion_notify_cb)
@@ -133,6 +135,8 @@ class PreviewWidget(Gtk.VBox, Loggable):
     def _unsurePlaybin(self):
         try:
             self.player = Gst.ElementFactory.make("playbin2", "preview-player")
+            if self.player == None:
+                self.player = Gst.ElementFactory.make("playbin", "preview-player")
         except:
             self.player = Gst.ElementFactory.make("playbin", "preview-player")
 
@@ -368,7 +372,7 @@ class PreviewWidget(Gtk.VBox, Loggable):
 
     def _sync_message_cb(self, bus, mess):
         if mess.type == Gst.MessageType.ELEMENT:
-            if mess.structure.get_name() == 'prepare-xwindow-id':
+            if mess.get_structure().get_name() == 'prepare-xwindow-id':
                 sink = mess.src
                 sink.set_property('force-aspect-ratio', True)
                 sink.set_property("handle-expose", True)
@@ -389,16 +393,19 @@ class PreviewWidget(Gtk.VBox, Loggable):
                             Gst.TAG_GENRE,
                             Gst.TAG_PERFORMER,
                             Gst.TAG_DATE]
-        for tag in tag_list.keys():
-            tag_type = Gst.tag_get_tag_type(tag)
+        self.tags = {}
+
+        def _GstTagForeachFunc(tag_list, tag, tags):
+            tag_type = Gst.tag_get_type(tag)
             if tag in acceptable_tags and tag_type in (GObject.TYPE_STRING,
                                    GObject.TYPE_DOUBLE,
                                    GObject.TYPE_FLOAT,
                                    GObject.TYPE_INT,
                                    GObject.TYPE_UINT):
                 name = Gst.tag_get_nick(tag)
-                value = unicode(tag_list[tag]).replace('<', ' ').replace('>', ' ')
-                self.tags[name] = value
+                value = unicode(tag_list.get_value_index(tag, 0)).replace('<', ' ').replace('>', ' ')
+                tags[name] = value
+        tag_list.foreach(_GstTagForeachFunc, self.tags)
         keys = self.tags.keys()
         keys.sort()
         text = self.description + "\n"
@@ -422,9 +429,9 @@ class PreviewWidget(Gtk.VBox, Loggable):
     def _destroy_cb(self, widget):
         self.player.set_state(Gst.State.NULL)
         self.is_playing = False
-        #FIXME: are the following lines really needed?
-        del self.player
-        del self.preview_cache
+        #FIXME: are the following lines really needed?, also it frees used bus!
+        #del self.player
+        #del self.preview_cache
 
     def __get_best_size(self, width_in, height_in):
         if width_in > height_in:

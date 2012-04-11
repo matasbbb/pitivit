@@ -23,7 +23,7 @@
 from gi.repository import GES
 from gi.repository import Gtk
 from gi.repository import Gst
-
+from gi.repository import Gdk
 from pitivi.utils.misc import infinity
 from pitivi.utils.loggable import Loggable
 from pitivi.utils.signal import Signallable
@@ -235,6 +235,7 @@ class Selection(Signallable):
         "selection-changed": []}
 
     def __init__(self):
+        Signallable.__init__(self)
         self.selected = set([])
         self.last_single_obj = None
 
@@ -1110,7 +1111,7 @@ class Controller(Loggable):
             self._hadj = self._canvas.app.gui.timeline_ui.hadj
             self._vadj = self._canvas.app.gui.timeline_ui.vadj
         self._last_event = event
-        s = event.get_state()
+        s = event.get_state()[1]
         self._shift_down = s & Gdk.ModifierType.SHIFT_MASK
         self._control_down = s & Gdk.ModifierType.CONTROL_MASK
 

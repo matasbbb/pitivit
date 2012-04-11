@@ -23,6 +23,7 @@ import platform
 from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import Gst
+from gi.repository import Gdk
 import cairo
 
 from gettext import gettext as _
@@ -134,17 +135,16 @@ class PitiviViewer(Gtk.VBox, Loggable):
         if self.pipeline:
             bus = self.pipeline.get_bus()
             bus.add_signal_watch()
-            # You cannot replace an existing sync_handler.
-            # You can pass NULL to clear it.
-            bus.set_sync_handler(None)
-            bus.set_sync_handler(self._elementMessageCb)
+            # set_sync_handler not introspectable
+            bus.enable_sync_message_emission()
+            bus.connect("sync-message", self._elementMessageCb)
             self.pipeline.set_state(Gst.State.PAUSED)
             self.currentState = Gst.State.PAUSED
             if position:
                 # Since the pipeline is async, the line below is a hack
                 # to force waiting indefinitely until the state has been changed
                 # before actually trying to seek.
-                self.pipeline.get_state(-1)
+                self.pipeline.get_state(Gst.CLOCK_TIME_NONE)
                 self.pipeline.seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH, position)
 
         self._setUiActive()
@@ -256,7 +256,7 @@ class PitiviViewer(Gtk.VBox, Loggable):
 
         # Buttons/Controls
         bbox = Gtk.HBox()
-        boxalign = Gtk.Alignment.new(xalign=0.5, yalign=0.5)
+        boxalign = Gtk.Alignment.new(0.5, 0.5, 0, 0)
         boxalign.add(bbox)
         self.pack_start(boxalign, False, True, 0)
 
@@ -294,7 +294,7 @@ class PitiviViewer(Gtk.VBox, Loggable):
         self.timecode_entry.setWidgetValue(0)
         self.timecode_entry.connect("value-changed", self._jumpToTimecodeCb)
         self.timecode_entry.connectFocusEvents(self._entryFocusInCb, self._entryFocusOutCb)
-        bbox.pack_start(self.timecode_entry, expand=False, padding=10)
+        bbox.pack_start(self.timecode_entry, False, True, 10)
         self._haveUI = True
 
         screen = Gdk.Screen.get_default()
@@ -303,7 +303,8 @@ class PitiviViewer(Gtk.VBox, Loggable):
             # show the controls and force the aspect frame to have at least the same
             # width (+110, which is a magic number to minimize dead padding).
             bbox.show_all()
-            width, height = bbox.size_request()
+            width = bbox.size_request().width
+            height = bbox.size_request().height
             width += 110
             height = int(width / self.aframe.props.ratio)
             self.aframe.set_size_request(width, height)
@@ -546,7 +547,7 @@ class PitiviViewer(Gtk.VBox, Loggable):
         tell the viewer to switch its output window.
         """
         if message.type == Gst.MessageType.ELEMENT:
-            name = message.structure.get_name()
+            name = message.get_structure().get_name()
             self.log('message:%s / %s', message, name)
             if name == 'prepare-xwindow-id':
                 self.sink = message.src
@@ -963,7 +964,8 @@ class ViewerWidget(Gtk.DrawingArea, Loggable):
                                         0, 0, 0, 0, *self.window.get_size())
         self.stored = True
 
-    def do_realize(self):
+    #FIXME: can't find porting way
+    def do_realize_notuse(self):
         """
         Redefine gtk DrawingArea's do_realize method to handle multiple OSes.
         This is called when creating the widget to get the window ID.
@@ -1000,8 +1002,8 @@ class ViewerWidget(Gtk.DrawingArea, Loggable):
                     self.renderbox()
         return True
 
-    def do_expose_event(self, event):
-        self.area = event.area
+    def do_draw(self, cr):
+        self.area = cr.clip_extents
         if self.box:
             self._update_gradient()
             if self.zoom != 1.0:
@@ -1048,7 +1050,7 @@ class ViewerWidget(Gtk.DrawingArea, Loggable):
                 if self.box.area.width != self.pixbuf.get_width():
                     cr.restore()
 
-            if self.pipeline and self.pipeline.get_state()[1] == Gst.State.PAUSED:
+            if self.pipeline and self.pipeline.get_state(Gst.CLOCK_TIME_NONE)[1] == Gst.State.PAUSED:
                 self.box.draw(cr)
             cr.pop_group_to_source()
             cr.paint()

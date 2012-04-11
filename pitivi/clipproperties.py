@@ -24,6 +24,7 @@ Class handling the midle pane
 """
 from gi.repository import Gtk
 from gi.repository import Pango
+from gi.repository import Gdk
 import os
 from gi.repository import GES
 
@@ -150,7 +151,7 @@ class EffectProperties(Gtk.Expander, Gtk.HBox):
 
     def __init__(self, instance, effect_properties_handling, clip_properties):
         Gtk.Expander.__init__(self)
-        Gtk.HBox.__init__(self)
+        #Gtk.HBox.__init__(self)
         #self.set_expanded(True)
 
         self.selected_effects = []
@@ -202,10 +203,8 @@ class EffectProperties(Gtk.Expander, Gtk.HBox):
 
         activatedcell = Gtk.CellRendererToggle()
         activatedcell.props.xpad = PADDING
-        activatedcol = self.treeview.insert_column_with_attributes(-1,
-                                                        _("Activated"),
-                                                        activatedcell,
-                                                        active=COL_ACTIVATED)
+        activatedcol = Gtk.TreeViewColumn(_("Activated"), activatedcell, active=COL_ACTIVATED)
+        self.treeview.insert_column(activatedcol, -1)
         activatedcell.connect("toggled", self._effectActiveToggleCb)
 
         typecol = Gtk.TreeViewColumn(_("Type"))
@@ -230,7 +229,7 @@ class EffectProperties(Gtk.Expander, Gtk.HBox):
         namecol.pack_start(namecell, True)
         namecol.add_attribute(namecell, "text", COL_NAME_TEXT)
 
-        self.Gtk.drag_dest_set(treeview, Gtk.DestDefaults.MOTION,
+        self.treeview.drag_dest_set(Gtk.DestDefaults.MOTION,
             [EFFECT_TUPLE],
             Gdk.DragAction.COPY)
 
@@ -265,7 +264,8 @@ class EffectProperties(Gtk.Expander, Gtk.HBox):
         self._updateAll()
 
     def _vcontentNotifyCb(self, paned, gparamspec):
-        if gparamspec.name == 'position':
+        #FIXME: gparmspec always none, update always for now
+        #if gparamspec != None and gparamspec.name == 'position':
             self._config_ui_h_pos = self._vcontent.get_position()
             self.settings.effectVPanedPosition = self._config_ui_h_pos
 
@@ -392,10 +392,10 @@ class EffectProperties(Gtk.Expander, Gtk.HBox):
     def _treeViewQueryTooltipCb(self, treeview, x, y, keyboard_mode, tooltip):
         context = treeview.get_tooltip_context(x, y, keyboard_mode)
 
-        if context is None:
+        if context[4] is None:
             return False
 
-        treeview.set_tooltip_row(tooltip, context[1][0])
+        treeview.set_tooltip_row(tooltip, context[4])
 
         return True
 
@@ -440,7 +440,7 @@ class EffectProperties(Gtk.Expander, Gtk.HBox):
             self.txtlabel, self._info_bar = self.clip_properties.addInfoBar(
                                 _("Select a clip on the timeline "
                                   "to configure its associated effects"))
-        self._info_bar.hide_all()
+        self._info_bar.hide()
         self.txtlabel.show()
         self._info_bar.show()
 
@@ -450,7 +450,7 @@ class EffectProperties(Gtk.Expander, Gtk.HBox):
     def _setEffectDragable(self):
         self.set_sensitive(True)
         self._table.show_all()
-        self._info_bar.hide_all()
+        self._info_bar.hide()
 
     def _treeviewSelectionChangedCb(self, treeview):
         if self.selection.count_selected_rows() == 0 and self.timeline_objects:

@@ -26,7 +26,8 @@ Widget for the complex view ruler
 from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import Gst
-
+from gi.repository import Gdk
+from fractions import Fraction
 from pitivi.utils.playback import Seeker
 from pitivi.utils.timeline import Zoomable
 from pitivi.utils.loggable import Loggable
@@ -37,7 +38,7 @@ from pitivi.utils.ui import time_to_string
 class ScaleRuler(Gtk.DrawingArea, Zoomable, Loggable):
 
     __gsignals__ = {
-        "expose-event": "override",
+        "draw": "override",
         "button-press-event": "override",
         "button-release-event": "override",
         "motion-notify-event": "override",
@@ -109,7 +110,8 @@ class ScaleRuler(Gtk.DrawingArea, Zoomable, Loggable):
 
 ## Gtk.Widget overrides
 
-    def do_expose_event(self, event):
+    def do_draw(self, event):
+        return False
         self.debug("exposing ScaleRuler %s", list(event.area))
         x, y, width, height = event.area
         # if (x < self.pixmap_offset) or (x+width > self.pixmap_offset + self.pixmap_allocated_width):

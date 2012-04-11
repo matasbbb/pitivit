@@ -28,6 +28,8 @@ import os
 from gi.repository import Gtk
 from gi.repository import Gst
 from gi.repository import GES
+from gi.repository import Gdk
+from gi.repository import GdkPixbuf
 import webbrowser
 
 from time import time
@@ -127,6 +129,8 @@ formats = [(None, _("PiTiVi Native (XML)"), ('xptv',))]
 
 def create_stock_icons():
     """ Creates the pitivi-only stock icons """
+    #FIXME: is it realy needed?
+    """
     Gtk.stock_add([
             ('pitivi-render', _('Render'), 0, 0, 'pitivi'),
             ('pitivi-split', _('Split'), 0, 0, 'pitivi'),
@@ -139,6 +143,7 @@ def create_stock_icons():
             ('pitivi-group', _('Group'), 0, 0, 'pitivi'),
             ('pitivi-align', _('Align'), 0, 0, 'pitivi'),
             ])
+    """
     pixmaps = {
         "pitivi-render": "pitivi-render-24.png",
         "pitivi-split": "pitivi-split-24.svg",
@@ -413,7 +418,7 @@ class PitiviMainWindow(Gtk.Window, Loggable):
 
         # Viewer
         self.viewer = PitiviViewer(instance, undock_action=self.undock_action)
-        self.Gtk.drag_dest_set(viewer, Gtk.DestDefaults.DROP | Gtk.DestDefaults.MOTION,
+        self.viewer.drag_dest_set(Gtk.DestDefaults.DROP | Gtk.DestDefaults.MOTION,
                            [FILESOURCE_TUPLE, URI_TUPLE],
                            Gdk.DragAction.COPY)
         self.viewer.connect("drag_data_received", self._viewerDndDataReceivedCb)
@@ -624,8 +629,7 @@ class PitiviMainWindow(Gtk.Window, Loggable):
         abt.set_website(APPURL)
         ges_version_str = "GES %i.%i.%i.%i" % (GES.version())
         gst_version_str = "GStreamer %i.%i.%i.%i" % (Gst.version())
-        pygst_version_str = "PyGST %i.%i.%i.%i" % (Gst.get_pygst_version())
-        abt.set_comments("%s\n%s\n%s" % (ges_version_str, pygst_version_str, gst_version_str))
+        abt.set_comments("%s\nn%s" % (ges_version_str, gst_version_str))
         authors = ["Edward Hervey <bilboed@bilboed.com>",
                    "Alessandro Decina <alessandro.decina@collabora.co.uk>",
                    "Brandon Lewis <brandon_lewis@berkeley.edu> (UI)",
@@ -671,7 +675,7 @@ class PitiviMainWindow(Gtk.Window, Loggable):
             chooser.add_filter(filt)
         default = Gtk.FileFilter()
         default.set_name(_("All Supported Formats"))
-        default.add_custom(Gtk.FileFilterFlags.URI, GES.Formatter.can_load_uri)
+        default.add_custom(Gtk.FileFilterFlags.URI, GES.Formatter.can_load_uri, None)
         chooser.add_filter(default)
 
         response = chooser.run()
@@ -746,7 +750,7 @@ class PitiviMainWindow(Gtk.Window, Loggable):
 
     def setBestZoomRatio(self, p=0):
         """Set the zoom level so that the entire timeline is in view."""
-        ruler_width = self.timeline_ui.ruler.get_allocation()[2]
+        ruler_width = self.timeline_ui.ruler.get_allocation().width
         # Add Gst.SECOND - 1 to the timeline duration to make sure the
         # last second of the timeline will be in view.
         duration = self.app.current.timeline.props.duration
@@ -785,13 +789,12 @@ class PitiviMainWindow(Gtk.Window, Loggable):
             save = Gtk.STOCK_SAVE_AS
 
         dialog = Gtk.Dialog("",
-            self, Gtk.DialogFlags.MODAL | Gtk.DialogFlags.NO_SEPARATOR,
+            self, Gtk.DialogFlags.MODAL,
             (_("Close without saving"), Gtk.ResponseType.REJECT,
                     Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                     save, Gtk.ResponseType.YES))
         dialog.set_icon_name("pitivi")
         dialog.set_resizable(False)
-        dialog.set_has_separator(False)
         dialog.set_default_response(Gtk.ResponseType.YES)
         dialog.set_transient_for(self)
 
@@ -941,8 +944,8 @@ class PitiviMainWindow(Gtk.Window, Loggable):
 
         label = Gtk.Label()
         label.set_markup(text)
-        hbox.pack_start(label, False, False)
-        dialog.get_content_area().pack_start(hbox, False, False)
+        hbox.pack_start(label, False, False, 0)
+        dialog.get_content_area().pack_start(hbox, False, False, 0)
         hbox.show_all()
 
         chooser = Gtk.FileChooserWidget(action=Gtk.FileChooserAction.OPEN)

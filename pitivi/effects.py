@@ -36,6 +36,8 @@ Effects global handling
 """
 from gi.repository import Gst
 from gi.repository import Gtk
+from gi.repository import Gdk
+from gi.repository import GdkPixbuf
 import re
 import os
 from gi.repository import GObject
@@ -503,10 +505,11 @@ class EffectListWidget(Gtk.VBox, Loggable):
         view_menu_item = uiman.get_widget('/MainMenuBar/View')
         view_menu = view_menu_item.get_submenu()
         seperator = Gtk.SeparatorMenuItem()
-        self.treeview_menuitem = Gtk.RadioMenuItem(None,
+        self.treeview_menuitem = Gtk.RadioMenuItem.new_with_label([],
                 _("Show Video Effects as a List"))
-        self.iconview_menuitem = Gtk.RadioMenuItem(self.treeview_menuitem,
-                _("Show Video Effects as Icons"))
+        self.iconview_menuitem = Gtk.RadioMenuItem.new_with_label(\
+            self.treeview_menuitem.get_group(),
+            _("Show Video Effects as Icons"))
 
         if self.settings.lastEffectView == SHOW_TREEVIEW:
             self.treeview_menuitem.set_active(True)
@@ -674,14 +677,14 @@ class EffectListWidget(Gtk.VBox, Loggable):
 
         if self.effect_view is SHOW_TREEVIEW or\
                     self._effect_type_ref == AUDIO_EFFECT:
-            view.set_tooltip_row(tooltip, context[1][0])
+            view.set_tooltip_row(tooltip, context[4])
         elif self.effect_view is SHOW_ICONVIEW and\
                      self._effect_type_ref == VIDEO_EFFECT:
-            view.set_tooltip_item(tooltip, context[1][0])
-        name = self.modelFilter.get_value(context[2], COL_ELEMENT_NAME)
+            view.set_tooltip_item(tooltip, context[4])
+        name = self.modelFilter.get_value(context[5], COL_ELEMENT_NAME)
         if self._current_effect_name != name:
             self._current_effect_name = name
-            icon = self.modelFilter.get_value(context[2], COL_ICON)
+            icon = self.modelFilter.get_value(context[5], COL_ICON)
             self._current_tooltip_icon = icon
 
         longname = escape(self.modelFilter.get_value(context[2],

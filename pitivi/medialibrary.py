@@ -28,7 +28,10 @@ from gi.repository import Gst
 from gi.repository import GES
 from gi.repository import GObject
 from gi.repository import Gtk
+from gi.repository import Gdk
 from gi.repository import Pango
+from gi.repository import GdkPixbuf
+from gi.repository import GstPbutils
 import os
 import time
 
@@ -374,7 +377,7 @@ class MediaLibraryWidget(Gtk.VBox, Loggable):
         self.iconview.connect("focus-in-event", self._disableKeyboardShortcutsCb)
         self.iconview.connect("focus-out-event", self._enableKeyboardShortcutsCb)
         self.iconview.connect("selection-changed", self._viewSelectionChangedCb)
-        self.iconviewset_item_orientation(Gtk.Orientation.VERTICAL)
+        self.iconview.set_item_orientation(Gtk.Orientation.VERTICAL)
         self.iconview.set_property("has_tooltip", True)
         self.iconview.set_tooltip_column(COL_INFOTEXT)
         self.iconview.set_text_column(COL_SHORT_TEXT)
@@ -429,7 +432,7 @@ class MediaLibraryWidget(Gtk.VBox, Loggable):
         self.videofilepixbuf = self._getIcon("video-x-generic", "pitivi-video.png")
 
         # Drag and Drop
-        Gtk.drag_dest_set(self, Gtk.DestDefaults.DROP | Gtk.DestDefaults.MOTION,
+        self.drag_dest_set(Gtk.DestDefaults.DROP | Gtk.DestDefaults.MOTION,
                            [dnd.URI_TUPLE, dnd.FILE_TUPLE],
                            Gdk.DragAction.COPY)
         self.connect("drag_data_received", self._dndDataReceivedCb)
@@ -499,10 +502,10 @@ class MediaLibraryWidget(Gtk.VBox, Loggable):
         view_menu_item = uiman.get_widget('/MainMenuBar/View')
         view_menu = view_menu_item.get_submenu()
         seperator = Gtk.SeparatorMenuItem()
-        self.treeview_menuitem = Gtk.RadioMenuItem(None,
+        self.treeview_menuitem = Gtk.RadioMenuItem.new_with_label([],
                 _("Show Clips as a List"))
-        self.iconview_menuitem = Gtk.RadioMenuItem(self.treeview_menuitem,
-                _("Show Clips as Icons"))
+        self.iconview_menuitem = Gtk.RadioMenuItem.new_with_label(\
+            self.treeview_menuitem.get_group(), _("Show Clips as Icons"))
 
         # update menu items with current clip view before we connect to item
         # signals
@@ -705,7 +708,7 @@ class MediaLibraryWidget(Gtk.VBox, Loggable):
 
     def _displayHelpText(self):
         """Display the InfoBar help message"""
-        self.infobar.hide_all()
+        self.infobar.hide()
         self.txtlabel.show()
         self.infobar.show()
 
@@ -822,7 +825,7 @@ class MediaLibraryWidget(Gtk.VBox, Loggable):
         self._updateProgressbar()
         self._addDiscovererInfo(factory)
         if len(self.storemodel):
-            self.infobar.hide_all()
+            self.infobar.hide()
             self.search_hbox.show_all()
 
     def _sourceRemovedCb(self, unused_medialibrary, uri, unused_info):
@@ -1028,7 +1031,7 @@ class MediaLibraryWidget(Gtk.VBox, Loggable):
     def _rowUnderMouseSelected(self, view, event):
         result = view.get_path_at_pos(int(event.x), int(event.y))
         if result:
-            path = result[0]
+            path = result
             if isinstance(view, Gtk.TreeView):
                 selection = view.get_selection()
 
@@ -1089,7 +1092,7 @@ class MediaLibraryWidget(Gtk.VBox, Loggable):
         # An item may or may not have been selected,
         # but the user right-clicked outside it.
         # In that case, the sensitivity values will stay to the default.
-        self.popup.popup(None, None, None, event.button, event.time)
+        self.popup.popup(None, None, None, None, event.button, event.time)
 
     def _viewGetFirstSelected(self):
         paths = self.getSelectedPaths()
@@ -1162,7 +1165,7 @@ class MediaLibraryWidget(Gtk.VBox, Loggable):
         if treeview.drag_check_threshold(self._dragX, self._dragY,
             int(event.x), int(event.y)):
             context = treeview.drag_begin(
-                [dnd.URI_TUPLE, dnd.FILESOURCE_TUPLE],
+                Gtk.TargetList.new([dnd.URI_TUPLE, dnd.FILESOURCE_TUPLE]),
                 Gdk.DragAction.COPY,
                 self._dragButton,
                 event)
@@ -1203,7 +1206,7 @@ class MediaLibraryWidget(Gtk.VBox, Loggable):
         if iconview.drag_check_threshold(self._dragX, self._dragY,
             int(event.x), int(event.y)):
             context = iconview.drag_begin(
-                [dnd.URI_TUPLE, dnd.FILESOURCE_TUPLE],
+                Gtk.TargetList.new([dnd.URI_TUPLE, dnd.FILESOURCE_TUPLE]),
                 Gdk.DragAction.COPY,
                 self._dragButton,
                 event)
@@ -1322,7 +1325,8 @@ class MediaLibraryWidget(Gtk.VBox, Loggable):
             context.drag_abort(int(time.time()))
         else:
             row = self.storemodel[paths[0]]
-            context.set_icon_pixbuf(row[COL_ICON], 0, 0)
+            #FIXME: No such function
+            #context.set_icon_pixbuf(row[COL_ICON], 0, 0)
 
     def getSelectedPaths(self):
         """ Returns a list of selected treeview or iconview items """

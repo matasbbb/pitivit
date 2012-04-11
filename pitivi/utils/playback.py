@@ -115,7 +115,7 @@ class Seeker(Signallable):
                 self.emit('seek', position, format)
             except:
                 log.doLog(log.ERROR, None, "seeker", "Error while seeking to position:%s format:%r",
-                          (Gst.TIME_ARGS(position), format))
+                          (position, format))
                 # if an exception happened while seeking, properly
                 # reset ourselves
                 return False
@@ -128,14 +128,14 @@ class Seeker(Signallable):
 #-----------------------------------------------------------------------------#
 #                   Pipeline utils                                            #
 def togglePlayback(pipeline):
-    if int(pipeline.get_state()[1]) == int(Gst.State.PLAYING):
+    if int(pipeline.get_state(Gst.CLOCK_TIME_NONE)[1]) == int(Gst.State.PLAYING):
         state = Gst.State.PAUSED
     else:
         state = Gst.State.PLAYING
 
     res = pipeline.set_state(state)
     if res == Gst.StateChangeReturn.FAILURE:
-        Gst.error("Could no set state to %s")
+        #Gst.error("Could no set state to %s")
         state = Gst.State.NULL
         pipeline.set_state(state)
 

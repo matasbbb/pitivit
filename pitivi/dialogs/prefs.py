@@ -58,7 +58,10 @@ class PreferencesDialog():
         self._current = None
         self._createUi()
         self._fillContents()
-        min_width, min_height = self.contents.size_request()
+        size = self.contents.size_request()
+        min_width = size.width
+        min_height = size.height
+
         width = max(min_width, self.settings.prefsDialogWidth)
         height = max(min_height, self.settings.prefsDialogHeight)
         self.dialog.set_default_size(width, height)
@@ -306,7 +309,7 @@ class PreferencesDialog():
                 widget.show()
                 revert.show()
 
-            self.contents.pack_start(widgets, True, True)
+            self.contents.pack_start(widgets, True, True, 0)
 
         self.treeview.get_selection().select_path((0,))
 

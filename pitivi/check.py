@@ -24,12 +24,14 @@ Runtime checks.
 """
 
 from gi.repository import Gtk
+from gi.repository import Gdk
 from gi.repository import Gst
-
+from gi.repository import GES
+from gi.repository import GooCanvas
 from gettext import gettext as _
 
 from pitivi.instance import PiTiVi
-from pitivi.configure import APPNAME, PYGTK_REQ, GTK_REQ, PYGST_REQ, GST_REQ, GNONLIN_REQ, PYCAIRO_REQ
+from pitivi.configure import APPNAME, GOOCANVAS_REQ, GTK_REQ, GST_REQ, GNONLIN_REQ, CAIRO_REQ, GES_REQ
 
 global soft_deps
 soft_deps = {}
@@ -86,22 +88,22 @@ def check_required_version(modulename):
     containing the strings of the required version and the installed version.
     This function does not check for the existence of the given module !
     """
-    if modulename == "pygtk":
-        if list(Gtk.pygtk_version) < _string_to_list(PYGTK_REQ):
-            return [PYGTK_REQ, _version_to_string(Gtk.pygtk_version)]
     if modulename == "gtk":
-        if list(Gtk.gtk_version) < _string_to_list(GTK_REQ):
+        if list(Gtk._version)[0:3:2] < _string_to_list(GTK_REQ):
             return [GTK_REQ, _version_to_string(Gtk.gtk_version)]
-    if modulename == "pygst":
-        if list(Gst.get_pygst_version()) < _string_to_list(PYGST_REQ):
-            return [PYGST_REQ, _version_to_string(Gst.get_pygst_version())]
     if modulename == "cairo":
         import cairo
-        if _string_to_list(cairo.cairo_version_string()) < _string_to_list(PYCAIRO_REQ):
-            return [PYCAIRO_REQ, cairo.cairo_version_string()]
+        if _string_to_list(cairo.cairo_version_string()) < _string_to_list(CAIRO_REQ):
+            return [CAIRO_REQ, cairo.cairo_version_string()]
     if modulename == "gst":
-        if list(Gst.get_gst_version()) < _string_to_list(GST_REQ):
+        if list(Gst.version()) < _string_to_list(GST_REQ):
             return [GST_REQ, _version_to_string(Gst.get_gst_version())]
+    if modulename == "ges":
+        if list(GES.version()) < _string_to_list(GES_REQ):
+            return [GES_REQ, _version_to_string(GES.version())]
+    if modulename == "goocanvas":
+        if list(GooCanvas._version)[0:3:2] < _string_to_list(GOOCANVAS_REQ):
+            return [GOOCANVAS_REQ, _version_to_string(Gtk.gtk_version)]
     if modulename == "gnonlin":
         gnlver = Gst.Registry.get().find_plugin("gnonlin").get_version()
         if _string_to_list(gnlver) < _string_to_list(GNONLIN_REQ):
@@ -121,8 +123,8 @@ def initial_checks():
         return (_("Could not find the autodetect plugins"),
                 _("Make sure you have installed gst-plugins-good and that it's available in the GStreamer plugin path."))
     if not hasattr(Gdk.Window, 'cairo_create'):
-        return (_("PyGTK doesn't have cairo support"),
-                _("Please use a version of the GTK+ Python bindings built with cairo support."))
+        return (_("GTK doesn't have cairo support"),
+                _("Please use a version of the GTK+ built with cairo support."))
     if not initiate_videosinks():
         return (_("Could not initiate the video output plugins"),
                 _("Make sure you have at least one valid video output sink available (xvimagesink or ximagesink)."))
@@ -132,40 +134,36 @@ def initial_checks():
     if not __try_import__("cairo"):
         return (_("Could not import the cairo Python bindings"),
                 _("Make sure you have the cairo Python bindings installed."))
-    if not __try_import__("goocanvas"):
-        return (_("Could not import the goocanvas Python bindings"),
-                _("Make sure you have the goocanvas Python bindings installed."))
     if not __try_import__("xdg"):
         return (_("Could not import the xdg Python library"),
                 _("Make sure you have the xdg Python library installed."))
-    req, inst = check_required_version("pygtk")
-    if req:
-        return (_("You do not have a recent enough version of the GTK+ Python bindings (your version %s)") % inst,
-                _("Install a version of the GTK+ Python bindings greater than or equal to %s.") % req)
+    if not __try_import__("gi"):
+        return (_("Could not import PyGi"),
+                _("Make sure you have PyGi installed."))
     req, inst = check_required_version("gtk")
     if req:
         return (_("You do not have a recent enough version of GTK+ (your version %s)") % inst,
-                _("Install a version of GTK+ greater than or equal to %s.") % req)
-    req, inst = check_required_version("pygst")
+                _("Install a version of the GTK+ greater than or equal to %s.") % req)
+    req, inst = check_required_version("ges")
     if req:
-        return (_("You do not have a recent enough version of GStreamer Python bindings (your version %s)") % inst,
-                _("Install a version of the GStreamer Python bindings greater than or equal to %s.") % req)
+        return (_("You do not have a recent enough version of GStreamer editing service (your version %s)") % inst,
+                _("Install a version of the GStreamer editing service greater than or equal to %s.") % req)
+    req, inst = check_required_version("goocanvas")
+    if req:
+        return (_("You do not have a recent enough version of GooCanvas") % inst,
+                _("Install a version of the GooCanvas greater than or equal to %s.") % req)
     req, inst = check_required_version("gst")
     if req:
         return (_("You do not have a recent enough version of GStreamer (your version %s)") % inst,
                 _("Install a version of the GStreamer greater than or equal to %s.") % req)
     req, inst = check_required_version("cairo")
     if req:
-        return (_("You do not have a recent enough version of the cairo Python bindings (your version %s)") % inst,
-                _("Install a version of the cairo Python bindings greater than or equal to %s.") % req)
+        return (_("You do not have a recent enough version of the cairo (your version %s)") % inst,
+                _("Install a version of the cairo greater than or equal to %s.") % req)
     req, inst = check_required_version("gnonlin")
     if req:
         return (_("You do not have a recent enough version of the GNonLin GStreamer plugin (your version %s)") % inst,
                 _("Install a version of the GNonLin GStreamer plugin greater than or equal to %s.") % req)
-    if not __try_import__("ges"):
-        #FIXME enable version checking in GES
-        return (_("Could not import GStreamer Editing Services "),
-                _("Make sure you have GStreamer Editing Services installed."))
     if not __try_import__("zope.interface"):
         return (_("Could not import the Zope interface module"),
                 _("Make sure you have the zope.interface module installed."))
@@ -180,9 +178,12 @@ def initial_checks():
         soft_deps["NumPy"] = _("Enables the autoalign feature")
     try:
         #if not Gst.Registry.get().find_plugin("frei0r"):
-        Gst.ElementFactory.make("frei0r-filter-scale0tilt", None)
+        element = Gst.ElementFactory.make("frei0r-filter-scale0tilt", None)
+        if element == None:
+            soft_deps["Frei0r"] = _("Additional video effects")
     except Gst.ElementNotFoundError:
         soft_deps["Frei0r"] = _("Additional video effects")
+
     if not Gst.Registry.get().find_plugin("ffmpeg"):
         soft_deps["GStreamer FFmpeg plugin"] = _('Additional multimedia codecs through the FFmpeg library')
     # Test for gst bad

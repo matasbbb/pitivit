@@ -26,7 +26,9 @@ UI utilities. This file contain the UI constants, and various functions and
 classes that help with UI drawing around the application
 """
 from gi.repository import Gst
+from gi.repository import GstPbutils
 from gi.repository import Gtk
+from fractions import Fraction
 import os
 import cairo
 
@@ -372,18 +374,18 @@ def get_value_from_model(model, key):
 # FIXME This should into a special file
 frame_rates = model((str, object), (
     # Translators: fps is for frames per second
-    (_("%d fps") % 12, Fraction(12.0, 1.0)),
-    (_("%d fps") % 15, Fraction(15.0, 1.0)),
-    (_("%d fps") % 20, Fraction(20.0, 1.0)),
-    (_("%.3f fps") % 23.976, Fraction(24000.0, 1001.0)),
-    (_("%d fps") % 24, Fraction(24.0, 1.0)),
-    (_("%d fps") % 25, Fraction(25.0, 1.0)),
-    (_("%.2f fps") % 29.97, Fraction(30000.0, 1001.0)),
-    (_("%d fps") % 30, Fraction(30.0, 1.0)),
-    (_("%d fps") % 50, Fraction(50.0, 1.0)),
-    (_("%.2f fps") % 59.94, Fraction(60000.0, 1001.0)),
-    (_("%d fps") % 60, Fraction(60.0, 1.0)),
-    (_("%d fps") % 120, Fraction(120.0, 1.0)),
+    (_("%d fps") % 12, Fraction(12, 1)),
+    (_("%d fps") % 15, Fraction(15, 1)),
+    (_("%d fps") % 20, Fraction(20, 1)),
+    (_("%.3f fps") % 23.976, Fraction(24000, 1001)),
+    (_("%d fps") % 24, Fraction(24, 1)),
+    (_("%d fps") % 25, Fraction(25, 1)),
+    (_("%.2f fps") % 29.97, Fraction(30000, 1001)),
+    (_("%d fps") % 30, Fraction(30, 1)),
+    (_("%d fps") % 50, Fraction(50, 1)),
+    (_("%.2f fps") % 59.94, Fraction(60000, 1001)),
+    (_("%d fps") % 60, Fraction(60, 1)),
+    (_("%d fps") % 120, Fraction(120, 1)),
 ))
 
 audio_rates = model((str, int), (

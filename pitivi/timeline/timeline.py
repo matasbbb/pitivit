@@ -25,12 +25,13 @@
 """
 
 from gi.repository import Gtk
+from gi.repository import Gdk
 from gi.repository import Gst
 from gi.repository import GES
 import ruler
 from gi.repository import GObject
 from gi.repository import GooCanvas
-
+from fractions import Fraction
 from gettext import gettext as _
 from os.path import join
 
@@ -75,14 +76,14 @@ PreferencesDialog.addNumericPreference('edgeSnapDeadband',
 # cursors to be used for resizing objects
 ARROW = Gdk.Cursor.new(Gdk.CursorType.ARROW)
 # TODO: replace this with custom cursor
-PLAYHEAD_CURSOR = Gdk.Cursor.new(Gdk.SB_H_DOUBLE_ARROW)
+PLAYHEAD_CURSOR = Gdk.Cursor.new(Gdk.CursorType.SB_H_DOUBLE_ARROW)
 
 # Drag and drop constants/tuples
 # FIXME, rethink the way we handle that as it is quite 'hacky'
-DND_EFFECT_LIST = [[VIDEO_EFFECT_TUPLE[0], EFFECT_TUPLE[0]],\
-                  [AUDIO_EFFECT_TUPLE[0], EFFECT_TUPLE[0]]]
-VIDEO_EFFECT_LIST = [VIDEO_EFFECT_TUPLE[0], EFFECT_TUPLE[0]],
-AUDIO_EFFECT_LIST = [AUDIO_EFFECT_TUPLE[0], EFFECT_TUPLE[0]],
+DND_EFFECT_LIST = [[VIDEO_EFFECT_TUPLE.target, EFFECT_TUPLE.target],\
+                  [AUDIO_EFFECT_TUPLE.target, EFFECT_TUPLE.target]]
+VIDEO_EFFECT_LIST = [VIDEO_EFFECT_TUPLE.target, EFFECT_TUPLE.target],
+AUDIO_EFFECT_LIST = [AUDIO_EFFECT_TUPLE.target, EFFECT_TUPLE.target],
 
 # tooltip text for toolbar
 DELETE = _("Delete Selected")
@@ -161,7 +162,7 @@ class TimelineCanvas(GooCanvas.Canvas, Zoomable, Loggable):
 
     __gtype_name__ = 'TimelineCanvas'
     __gsignals__ = {
-        "expose-event": "override",
+        "draw": "override",
     }
 
     _tracks = None
@@ -194,8 +195,8 @@ class TimelineCanvas(GooCanvas.Canvas, Zoomable, Loggable):
         root.add_child(self.tracks, 0)
         self._marquee = GooCanvas.CanvasRect(
             parent=root,
-            stroke_pattern=unpack_cairo_pattern(0x33CCFF66),
-            fill_pattern=unpack_cairo_pattern(0x33CCFF66),
+            stroke_color_rgba=0x33CCFF66,
+            fill_color_rgba=0x33CCFF66,
             visibility=GooCanvas.CanvasItemVisibility.INVISIBLE)
         self._playhead = GooCanvas.CanvasRect(
             y=-10,
@@ -234,21 +235,20 @@ class TimelineCanvas(GooCanvas.Canvas, Zoomable, Loggable):
         event.window.set_cursor(self._cursor)
         return True
 
-    def do_expose_event(self, event):
+    def do_draw(self, cr):
         allocation = self.get_allocation()
         width = allocation.width
         height = allocation.height
         # draw the canvas background
         # we must have props.clear_background set to False
 
-        self.get_style().apply_default_background(event.window,
-            True,
+        self.get_style().apply_default_background(cr,
+            self.get_window(),
             Gtk.StateType.ACTIVE,
-            event.area,
-            event.area.x, event.area.y,
-            event.area.width, event.area.height)
+            0, 0,
+            width, height)
 
-        GooCanvas.Canvas.do_expose_event(self, event)
+        GooCanvas.Canvas.do_draw(self, cr)
 
 ## implements selection marquee
 
@@ -274,7 +274,7 @@ class TimelineCanvas(GooCanvas.Canvas, Zoomable, Loggable):
 
         @returns: A list of L{Track}, L{TrackObject} tuples
         '''
-        items = self.get_items_in_area(GooCanvas.Bounds(x1, y1, x2, y2), True,
+        items = self.get_items_in_area(GooCanvas.CanvasBounds(x1, y1, x2, y2), True,
             True, True)
         if not items:
             return [], []
@@ -588,7 +588,7 @@ class Timeline(Gtk.Table, Loggable, Zoomable):
         zoom_fit_icon.set_from_stock(Gtk.STOCK_ZOOM_FIT, Gtk.IconSize.BUTTON)
         zoom_fit_btn_hbox = Gtk.HBox()
         zoom_fit_btn_hbox.pack_start(zoom_fit_icon, True, True, 0)
-        zoom_fit_btn_hbox.pack_start(Gtk.Label(_("Zoom", True, True, 0)))
+        zoom_fit_btn_hbox.pack_start(Gtk.Label(_("Zoom")), True, True, 0)
         zoom_fit_btn.add(zoom_fit_btn_hbox)
         zoom_fit_btn.connect("clicked", self._zoomFitCb)
         zoom_controls_hbox.pack_start(zoom_fit_btn, True, True, 0)
@@ -599,7 +599,7 @@ class Timeline(Gtk.Table, Loggable, Zoomable):
             self._zoomAdjustmentChangedCb)
         self._zoomAdjustment.props.lower = 0
         self._zoomAdjustment.props.upper = Zoomable.zoom_steps
-        zoomslider = Gtk.HScale(self._zoomAdjustment)
+        zoomslider = Gtk.HScale.new(self._zoomAdjustment)
         zoomslider.props.draw_value = False
         zoomslider.set_tooltip_text(_("Zoom Timeline"))
         zoomslider.connect("scroll-event", self._zoomSliderScrollCb)
@@ -732,7 +732,7 @@ class Timeline(Gtk.Table, Loggable, Zoomable):
         self.ui_manager.add_ui_from_string(ui)
 
         # drag and drop
-        Gtk.drag_dest_set(self, Gtk.DestDefaults.MOTION,
+        self.drag_dest_set(Gtk.DestDefaults.MOTION,
             [FILESOURCE_TUPLE, EFFECT_TUPLE],
             Gdk.DragAction.COPY)
 
@@ -1016,7 +1016,9 @@ class Timeline(Gtk.Table, Loggable, Zoomable):
                 self.scroll_up()
             elif event.direction == Gdk.ScrollDirection.DOWN:
                 self.scroll_down()
-            event.get_state() &= ~Gdk.ModifierType.SHIFT_MASK
+            #Work arround to lack set_state
+            state = event.get_state()
+            event &= ~Gdk.ModifierType.SHIFT_MASK
         elif event.get_state() & Gdk.ModifierType.CONTROL_MASK:
             # zoom + scroll => zooming (up: zoom in)
             if event.direction == Gdk.ScrollDirection.UP:

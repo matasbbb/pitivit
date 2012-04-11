@@ -27,7 +27,7 @@ import os
 from gi.repository import Gst
 from ConfigParser import SafeConfigParser, ParsingError
 import xdg.BaseDirectory as xdg_dirs  # Freedesktop directories spec
-
+from fractions import Fraction
 from pitivi.utils.signal import Signallable
 from pitivi.render import available_combinations, get_compatible_sink_caps
 from pitivi.utils.loggable import Loggable

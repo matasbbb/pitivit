@@ -20,7 +20,7 @@
 # Boston, MA 02110-1301, USA.
 
 import os.path
-
+from fractions import Fraction
 from gi.repository import Gst
 from gi.repository import Gtk
 import json
@@ -320,11 +320,11 @@ class VideoPresetManager(PresetManager):
 
         framerate_num = parser["framerate-num"]
         framerate_denom = parser["framerate-denom"]
-        framerate = Fraction(framerate_num, framerate_denom)
+        framerate = Fraction(int(framerate_num), int(framerate_denom))
 
         par_num = parser["par-num"]
         par_denom = parser["par-denom"]
-        par = Fraction(par_num, par_denom)
+        par = Fraction(int(par_num), int(par_denom))
 
         self.addPreset(name, {
             "width": width,
