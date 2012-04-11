@@ -2,10 +2,10 @@
 Main PiTiVi package
 """
 
-import gobject
-import ges
+from gi.repository import GObject
+from gi.repository import GES
 
 # This call must be made before any "import gst" call!
-gobject.threads_init()
+GObject.threads_init()
 
-ges.init()
+GES.init()

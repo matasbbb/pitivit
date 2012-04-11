@@ -24,8 +24,8 @@
 # any later version.
 
 
-import gst
-import gobject
+from gi.repository import Gst
+from gi.repository import GObject
 
 import pitivi.utils.loggable as log
 
@@ -64,13 +64,13 @@ class Seeker(Signallable):
         self.format = None
         self._time = None
 
-    def seek(self, position, format=gst.FORMAT_TIME, on_idle=False):
+    def seek(self, position, format=Gst.Format.TIME, on_idle=False):
         self.format = format
         self.position = position
 
         if self.pending_seek_id is None:
             if on_idle:
-                gobject.idle_add(self._seekTimeoutCb)
+                GObject.idle_add(self._seekTimeoutCb)
             else:
                 self._seekTimeoutCb()
             self.pending_seek_id = self._scheduleSeek(self.timeout,
@@ -80,7 +80,7 @@ class Seeker(Signallable):
         if self.pending_seek_id is None:
             self._time = time
             if on_idle:
-                gobject.idle_add(self._seekRelativeTimeoutCb)
+                GObject.idle_add(self._seekRelativeTimeoutCb)
             else:
                 self._seekTimeoutCb()
             self.pending_seek_id = self._scheduleSeek(self.timeout,
@@ -93,7 +93,7 @@ class Seeker(Signallable):
             log.doLog(log.ERROR, None, "seeker", "Error while flushing", None)
 
     def _scheduleSeek(self, timeout, callback, relative=False):
-        return gobject.timeout_add(timeout, callback, relative)
+        return GObject.timeout_add(timeout, callback, relative)
 
     def _seekTimeoutCb(self, relative=False):
         self.pending_seek_id = None
@@ -115,7 +115,7 @@ class Seeker(Signallable):
                 self.emit('seek', position, format)
             except:
                 log.doLog(log.ERROR, None, "seeker", "Error while seeking to position:%s format:%r",
-                          (gst.TIME_ARGS(position), format))
+                          (Gst.TIME_ARGS(position), format))
                 # if an exception happened while seeking, properly
                 # reset ourselves
                 return False
@@ -128,15 +128,15 @@ class Seeker(Signallable):
 #-----------------------------------------------------------------------------#
 #                   Pipeline utils                                            #
 def togglePlayback(pipeline):
-    if int(pipeline.get_state()[1]) == int(gst.STATE_PLAYING):
-        state = gst.STATE_PAUSED
+    if int(pipeline.get_state()[1]) == int(Gst.State.PLAYING):
+        state = Gst.State.PAUSED
     else:
-        state = gst.STATE_PLAYING
+        state = Gst.State.PLAYING
 
     res = pipeline.set_state(state)
-    if res == gst.STATE_CHANGE_FAILURE:
-        gst.error("Could no set state to %s")
-        state = gst.STATE_NULL
+    if res == Gst.StateChangeReturn.FAILURE:
+        Gst.error("Could no set state to %s")
+        state = Gst.State.NULL
         pipeline.set_state(state)
 
     return state

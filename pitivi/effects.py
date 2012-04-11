@@ -34,13 +34,13 @@ Effects global handling
      that are too cumbersome to use as such
   _ Complex Audio/Video Effects
 """
-import gst
-import gtk
+from gi.repository import Gst
+from gi.repository import Gtk
 import re
 import os
-import gobject
+from gi.repository import GObject
 import time
-import pango
+from gi.repository import Pango
 
 
 from gettext import gettext as _
@@ -161,10 +161,10 @@ class EffectsHandler(object):
         go trough the list of element factories and
         add them to the correct list filtering if necessary
         """
-        factlist = gst.registry_get_default().get_feature_list(
-            gst.ElementFactory)
+        factlist = Gst.Registry.get().get_feature_list(
+            Gst.ElementFactory)
         for element_factory in factlist:
-            klass = element_factory.get_klass()
+            klass = element_factory.get_metadata('klass')
             name = element_factory.get_name()
             if "Effect" in klass and name not in BLACKLISTED_EFFECTS and not\
                 [bplug for bplug in BLACKLISTED_PLUGINS if bplug in name]:
@@ -207,10 +207,10 @@ class EffectsHandler(object):
     def _getEffectDescripton(self, element_factory):
         """
         @ivar element_factory: The element factory
-        @type element_factory: L{gst.ElementFactory}
+        @type element_factory: L{Gst.ElementFactory}
         @returns: A human description C{str} for the effect
         """
-        return element_factory.get_description()
+        return element_factory.get_metadata('description')
 
     def _getEffectCategories(self, effect_name):
         """
@@ -247,7 +247,7 @@ class EffectsHandler(object):
     def _getEffectName(self, element_factory):
         """
         @ivar element_factory: The element factory
-        @type element_factory: L{gst.ElementFactory}
+        @type element_factory: L{Gst.ElementFactory}
         @returns: A human readable name C{str} for the effect
         """
         #TODO check if it is the good way to make it translatable
@@ -257,7 +257,7 @@ class EffectsHandler(object):
         effect = _("effect")
         pipe = " |"
         uselessWords = re.compile(video + pipe + audio + pipe + effect)
-        return uselessWords.sub("", element_factory.get_longname()).title()
+        return uselessWords.sub("", element_factory.get_metadata('long-name')).title()
 
     def getVideoCategories(self, aware=True):
         """
@@ -312,13 +312,13 @@ class EffectsHandler(object):
         effect_name = effect_name + ".png"
         icon = None
         try:
-            icon = gtk.gdk.pixbuf_new_from_file(os.path.join(self._pixdir,
+            icon = GdkPixbuf.Pixbuf.new_from_file(os.path.join(self._pixdir,
                 effect_name))
-        # empty except clause is bad but load_icon raises gio.Error.
+        # empty except clause is bad but load_icon raises Gio.Error.
         ## Right, *gio*.
         except:
             try:
-                icon = gtk.gdk.pixbuf_new_from_file(os.path.join(self._pixdir,
+                icon = GdkPixbuf.Pixbuf.new_from_file(os.path.join(self._pixdir,
                     "defaultthumbnail.svg"))
             except:
                 return None
@@ -347,15 +347,15 @@ GlobalSettings.addConfigOption('lastEffectView',
  COL_ELEMENT_NAME,
  COL_ICON) = range(7)
 
-INVISIBLE = gtk.gdk.pixbuf_new_from_file(os.path.join(get_pixmap_dir(),
+INVISIBLE = GdkPixbuf.Pixbuf.new_from_file(os.path.join(get_pixmap_dir(),
     "invisible.png"))
 
 
-class EffectListWidget(gtk.VBox, Loggable):
+class EffectListWidget(Gtk.VBox, Loggable):
     """ Widget for listing effects """
 
     def __init__(self, instance, uiman):
-        gtk.VBox.__init__(self)
+        Gtk.VBox.__init__(self)
         Loggable.__init__(self)
 
         self.app = instance
@@ -372,75 +372,75 @@ class EffectListWidget(gtk.VBox, Loggable):
         self._current_tooltip_icon = None
 
         #Searchbox and combobox
-        hfilters = gtk.HBox()
+        hfilters = Gtk.HBox()
         hfilters.set_spacing(SPACING)
         hfilters.set_border_width(3)  # Prevents being flush against the notebook
-        self.effectType = gtk.combo_box_new_text()
+        self.effectType = Gtk.ComboBoxText()
         self.effectType.append_text(_("Video effects"))
         self.effectType.append_text(_("Audio effects"))
-        self.effectCategory = gtk.combo_box_new_text()
+        self.effectCategory = Gtk.ComboBoxText()
         self.effectType.set_active(VIDEO_EFFECT)
 
-        hfilters.pack_start(self.effectType, expand=True)
-        hfilters.pack_end(self.effectCategory, expand=True)
+        hfilters.pack_start(self.effectType, True, True, 0)
+        hfilters.pack_end(self.effectCategory, True, True, 0)
 
-        hsearch = gtk.HBox()
+        hsearch = Gtk.HBox()
         hsearch.set_spacing(SPACING)
         hsearch.set_border_width(3)  # Prevents being flush against the notebook
-        searchStr = gtk.Label(_("Search:"))
-        self.searchEntry = gtk.Entry()
-        self.searchEntry.set_icon_from_stock(gtk.ENTRY_ICON_SECONDARY, "gtk-clear")
-        hsearch.pack_start(searchStr, expand=False)
-        hsearch.pack_end(self.searchEntry, expand=True)
+        searchStr = Gtk.Label(label=_("Search:"))
+        self.searchEntry = Gtk.Entry()
+        self.searchEntry.set_icon_from_stock(Gtk.EntryIconPosition.SECONDARY, "gtk-clear")
+        hsearch.pack_start(searchStr, False, True, 0)
+        hsearch.pack_end(self.searchEntry, True, True, 0)
 
         # Store
-        self.storemodel = gtk.ListStore(str, str, int, object, object, str, gtk.gdk.Pixbuf)
+        self.storemodel = Gtk.ListStore(str, str, int, object, object, str, GdkPixbuf.Pixbuf)
 
         # Scrolled Windows
-        self.treeview_scrollwin = gtk.ScrolledWindow()
-        self.treeview_scrollwin.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        self.treeview_scrollwin.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        self.treeview_scrollwin = Gtk.ScrolledWindow()
+        self.treeview_scrollwin.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.treeview_scrollwin.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
 
-        self.iconview_scrollwin = gtk.ScrolledWindow()
-        self.iconview_scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.iconview_scrollwin.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        self.iconview_scrollwin = Gtk.ScrolledWindow()
+        self.iconview_scrollwin.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        self.iconview_scrollwin.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
 
         # TreeView
         # Displays name, description
-        self.treeview = gtk.TreeView(self.storemodel)
+        self.treeview = Gtk.TreeView(self.storemodel)
         self.treeview_scrollwin.add(self.treeview)
         self.treeview.set_property("rules_hint", True)
         self.treeview.set_property("has_tooltip", True)
         self.treeview.set_property("headers-clickable", False)
         tsel = self.treeview.get_selection()
-        tsel.set_mode(gtk.SELECTION_SINGLE)
+        tsel.set_mode(Gtk.SelectionMode.SINGLE)
 
-        namecol = gtk.TreeViewColumn(_("Name"))
+        namecol = Gtk.TreeViewColumn(_("Name"))
         namecol.set_sort_column_id(COL_NAME_TEXT)
         self.treeview.append_column(namecol)
         namecol.set_spacing(SPACING)
-        namecol.set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
+        namecol.set_sizing(Gtk.TreeViewColumnSizing.FIXED)
         namecol.set_fixed_width(150)
-        namecell = gtk.CellRendererText()
+        namecell = Gtk.CellRendererText()
         namecell.props.xpad = 6
-        namecell.set_property("ellipsize", pango.ELLIPSIZE_END)
-        namecol.pack_start(namecell)
+        namecell.set_property("ellipsize", Pango.EllipsizeMode.END)
+        namecol.pack_start(namecell, True)
         namecol.add_attribute(namecell, "text", COL_NAME_TEXT)
 
-        desccol = gtk.TreeViewColumn(_("Description"))
+        desccol = Gtk.TreeViewColumn(_("Description"))
         desccol.set_sort_column_id(COL_DESC_TEXT)
         self.treeview.append_column(desccol)
         desccol.set_expand(True)
         desccol.set_spacing(SPACING)
-        desccol.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
+        desccol.set_sizing(Gtk.TreeViewColumnSizing.AUTOSIZE)
         desccol.set_min_width(150)
-        desccell = gtk.CellRendererText()
+        desccell = Gtk.CellRendererText()
         desccell.props.xpad = 6
-        desccell.set_property("ellipsize", pango.ELLIPSIZE_END)
-        desccol.pack_start(desccell)
+        desccell.set_property("ellipsize", Pango.EllipsizeMode.END)
+        desccol.pack_start(desccell, True)
         desccol.add_attribute(desccell, "text", COL_DESC_TEXT)
 
-        self.iconview = gtk.IconView(self.storemodel)
+        self.iconview = Gtk.IconView.new_with_model(self.storemodel)
         self.iconview.set_pixbuf_column(COL_ICON)
         self.iconview.set_text_column(COL_NAME_TEXT)
         self.iconview.set_item_width(102)
@@ -461,26 +461,26 @@ class EffectListWidget(gtk.VBox, Loggable):
         self.treeview.connect("motion-notify-event", self._motionNotifyEventCb)
         self.treeview.connect("query-tooltip", self._queryTooltipCb)
         self.treeview.connect("button-release-event", self._buttonReleaseCb)
-        self.treeview.drag_source_set(0, [], gtk.gdk.ACTION_COPY)
+        self.treeview.drag_source_set(0, [], Gdk.DragAction.COPY)
         self.treeview.connect("drag_begin", self._dndDragBeginCb)
         self.treeview.connect("drag_data_get", self._dndDataGetCb)
 
         self.iconview.connect("button-press-event", self._buttonPressEventCb)
         self.iconview.connect("activate-cursor-item", self._enterPressEventCb)
         self.iconview.connect("query-tooltip", self._queryTooltipCb)
-        self.iconview.drag_source_set(0, [], gtk.gdk.ACTION_COPY)
+        self.iconview.drag_source_set(0, [], Gdk.DragAction.COPY)
         self.iconview.connect("motion-notify-event", self._motionNotifyEventCb)
         self.iconview.connect("button-release-event", self._buttonReleaseCb)
         self.iconview.connect("drag_begin", self._dndDragBeginCb)
         self.iconview.connect("drag_data_get", self._dndDataGetCb)
         # Delay the loading of the available effects so the application
         # starts faster.
-        gobject.idle_add(self._loadAvailableEffectsCb)
+        GObject.idle_add(self._loadAvailableEffectsCb)
 
-        self.pack_start(hfilters, expand=False)
-        self.pack_start(hsearch, expand=False)
-        self.pack_end(self.treeview_scrollwin, expand=True)
-        self.pack_end(self.iconview_scrollwin, expand=True)
+        self.pack_start(hfilters, False, True, 0)
+        self.pack_start(hsearch, False, True, 0)
+        self.pack_end(self.treeview_scrollwin, True, True, 0)
+        self.pack_end(self.iconview_scrollwin, True, True, 0)
 
         #create the filterModel
         self.modelFilter = self.storemodel.filter_new()
@@ -502,10 +502,10 @@ class EffectListWidget(gtk.VBox, Loggable):
     def _addMenuItems(self, uiman):
         view_menu_item = uiman.get_widget('/MainMenuBar/View')
         view_menu = view_menu_item.get_submenu()
-        seperator = gtk.SeparatorMenuItem()
-        self.treeview_menuitem = gtk.RadioMenuItem(None,
+        seperator = Gtk.SeparatorMenuItem()
+        self.treeview_menuitem = Gtk.RadioMenuItem(None,
                 _("Show Video Effects as a List"))
-        self.iconview_menuitem = gtk.RadioMenuItem(self.treeview_menuitem,
+        self.iconview_menuitem = Gtk.RadioMenuItem(self.treeview_menuitem,
                 _("Show Video Effects as Icons"))
 
         if self.settings.lastEffectView == SHOW_TREEVIEW:
@@ -535,7 +535,7 @@ class EffectListWidget(gtk.VBox, Loggable):
                                          effect.getCategories(),
                                          effect, name,
                                          self.app.effects.getEffectIcon(name)])
-                self.storemodel.set_sort_column_id(COL_NAME_TEXT, gtk.SORT_ASCENDING)
+                self.storemodel.set_sort_column_id(COL_NAME_TEXT, Gtk.SortType.ASCENDING)
 
     def show_categories(self, effectType):
         self.effectCategory.get_model().clear()
@@ -602,7 +602,7 @@ class EffectListWidget(gtk.VBox, Loggable):
 
         if event.button == 3:
             chain_up = False
-        elif event.type is gtk.gdk._2BUTTON_PRESS:
+        elif event.type is Gdk.BUTTON_SECONDARY:
             factory_name = self.getSelectedItems()
             self.app.gui.clipconfig.effect_expander.addEffectToCurrentSelection(factory_name)
         else:
@@ -615,9 +615,9 @@ class EffectListWidget(gtk.VBox, Loggable):
             self._dragY = int(event.y)
 
         if chain_up and self.effect_view is SHOW_TREEVIEW:
-            gtk.TreeView.do_button_press_event(view, event)
+            Gtk.TreeView.do_button_press_event(view, event)
         elif chain_up and self.effect_view is SHOW_ICONVIEW:
-            gtk.IconView.do_button_press_event(view, event)
+            Gtk.IconView.do_button_press_event(view, event)
         else:
             view.grab_focus()
 
@@ -646,21 +646,21 @@ class EffectListWidget(gtk.VBox, Loggable):
         if self._nothingUnderMouse(view, event):
             return True
 
-        if not event.state & (gtk.gdk.CONTROL_MASK | gtk.gdk.SHIFT_MASK):
+        if not event.get_state() & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK):
             chain_up = not self._rowUnderMouseSelected(view, event)
 
         if view.drag_check_threshold(self._dragX, self._dragY,
             int(event.x), int(event.y)):
             context = view.drag_begin(
                 self._getDndTuple(),
-                gtk.gdk.ACTION_COPY,
+                Gdk.DragAction.COPY,
                 self._dragButton,
                 event)
             self._dragStarted = True
 
         if self.effect_view is SHOW_TREEVIEW:
             if chain_up:
-                gtk.TreeView.do_button_press_event(view, event)
+                Gtk.TreeView.do_button_press_event(view, event)
             else:
                 view.grab_focus()
 
@@ -781,7 +781,7 @@ class EffectsPropertiesManager:
         """
             Permit to get a configuration GUI for the effect
             @param effect: The effect for which we want the configuration UI
-            @type effect: C{gst.Element}
+            @type effect: C{Gst.Element}
         """
 
         if effect not in self.cache_dict:
@@ -790,10 +790,10 @@ class EffectsPropertiesManager:
             effect_set_ui.setElement(effect, ignore=PROPS_TO_IGNORE,
                                      default_btn=True, use_element_props=True)
             nb_rows = effect_set_ui.get_children()[0].get_property('n-rows')
-            effect_configuration_ui = gtk.ScrolledWindow()
+            effect_configuration_ui = Gtk.ScrolledWindow()
             effect_configuration_ui.add_with_viewport(effect_set_ui)
-            effect_configuration_ui.set_policy(gtk.POLICY_AUTOMATIC,
-                                               gtk.POLICY_AUTOMATIC)
+            effect_configuration_ui.set_policy(Gtk.PolicyType.AUTOMATIC,
+                                               Gtk.PolicyType.AUTOMATIC)
             self.cache_dict[effect] = effect_configuration_ui
             self._connectAllWidgetCbs(effect_set_ui, effect)
             self._postConfiguration(effect, effect_set_ui)
@@ -821,7 +821,7 @@ class EffectsPropertiesManager:
 
     def _getUiToSetEffect(self, effect):
         """ Permit to get the widget to set the effect and not its container """
-        if type(self.cache_dict[effect]) is gtk.ScrolledWindow:
+        if type(self.cache_dict[effect]) is Gtk.ScrolledWindow:
             effect_set_ui = self.cache_dict[effect].get_children()[0].get_children()[0]
         else:
             effect_set_ui = self.cache_dict[effect]
@@ -839,8 +839,8 @@ class EffectsPropertiesManager:
         value = dynamic.getWidgetValue()
 
         #FIXME Workaround in order to make aspectratiocrop working
-        if isinstance(value, gst.Fraction):
-            value = gst.Fraction(int(value.num), int(value.denom))
+        if isinstance(value, Fraction):
+            value = Fraction(int(value.numerator), int(value.denominator))
 
         if value != self._current_element_values.get(prop.name):
             self.action_log.begin("Effect property change")

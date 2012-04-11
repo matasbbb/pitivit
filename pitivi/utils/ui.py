@@ -25,8 +25,8 @@
 UI utilities. This file contain the UI constants, and various functions and
 classes that help with UI drawing around the application
 """
-import gst
-import gtk
+from gi.repository import Gst
+from gi.repository import Gtk
 import os
 import cairo
 
@@ -67,14 +67,14 @@ TYPE_PITIVI_VIDEO_EFFECT = 29
 TYPE_PITIVI_AUDIO_TRANSITION = 30
 TYPE_PITIVI_VIDEO_TRANSITION = 31
 
-FILE_TUPLE = ("text/plain", 0, TYPE_TEXT_PLAIN)
-URI_TUPLE = ("text/uri-list", 0, TYPE_URI_LIST)
-FILESOURCE_TUPLE = ("pitivi/file-source", 0, TYPE_PITIVI_FILESOURCE)
-EFFECT_TUPLE = ("pitivi/effect", 0, TYPE_PITIVI_EFFECT)
-AUDIO_EFFECT_TUPLE = ("pitivi/audio-effect", 0, TYPE_PITIVI_AUDIO_EFFECT)
-VIDEO_EFFECT_TUPLE = ("pitivi/video-effect", 0, TYPE_PITIVI_VIDEO_EFFECT)
-AUDIO_TRANSITION_TUPLE = ("pitivi/audio-transition", 0, TYPE_PITIVI_AUDIO_TRANSITION)
-VIDEO_TRANSITION_TUPLE = ("pitivi/video-transition", 0, TYPE_PITIVI_VIDEO_TRANSITION)
+FILE_TUPLE = Gtk.TargetEntry.new("text/plain", 0, TYPE_TEXT_PLAIN)
+URI_TUPLE = Gtk.TargetEntry.new("text/uri-list", 0, TYPE_URI_LIST)
+FILESOURCE_TUPLE = Gtk.TargetEntry.new("pitivi/file-source", 0, TYPE_PITIVI_FILESOURCE)
+EFFECT_TUPLE = Gtk.TargetEntry.new("pitivi/effect", 0, TYPE_PITIVI_EFFECT)
+AUDIO_EFFECT_TUPLE = Gtk.TargetEntry.new("pitivi/audio-effect", 0, TYPE_PITIVI_AUDIO_EFFECT)
+VIDEO_EFFECT_TUPLE = Gtk.TargetEntry.new("pitivi/video-effect", 0, TYPE_PITIVI_VIDEO_EFFECT)
+AUDIO_TRANSITION_TUPLE = Gtk.TargetEntry.new("pitivi/audio-transition", 0, TYPE_PITIVI_AUDIO_TRANSITION)
+VIDEO_TRANSITION_TUPLE = Gtk.TargetEntry.new("pitivi/video-transition", 0, TYPE_PITIVI_VIDEO_TRANSITION)
 
 
 # ---------------------- ARGB color helper-------------------------------------#
@@ -158,9 +158,9 @@ def hex_to_rgb(value):
 #------ Helper to help beatify indos so they can be displayed in the UI -----#
 def beautify_info(info):
     ranks = {
-        gst.pbutils.DiscovererVideoInfo: 0,
-        gst.pbutils.DiscovererAudioInfo: 1,
-        gst.pbutils.DiscovererStreamInfo: 2
+        GstPbutils.DiscovererVideoInfo: 0,
+        GstPbutils.DiscovererAudioInfo: 1,
+        GstPbutils.DiscovererStreamInfo: 2
     }
 
     def stream_sort_key(stream):
@@ -185,7 +185,7 @@ def info_name(info):
 
 
 def beautify_stream(stream):
-    if type(stream) == gst.pbutils.DiscovererAudioInfo:
+    if type(stream) == GstPbutils.DiscovererAudioInfo:
         templ = ngettext("<b>Audio:</b> %d channel at %d <i>Hz</i> (%d <i>bits</i>)",
                 "<b>Audio:</b> %d channels at %d <i>Hz</i> (%d <i>bits</i>)",
                 stream.get_channels())
@@ -193,7 +193,7 @@ def beautify_stream(stream):
             stream.get_depth())
         return templ
 
-    elif type(stream) == gst.pbutils.DiscovererVideoInfo:
+    elif type(stream) == GstPbutils.DiscovererVideoInfo:
         par = stream.get_par_num() / stream.get_par_denom()
         if not stream.is_image():
             templ = _(u"<b>Video:</b> %d×%d <i>pixels</i> at %.3f <i>fps</i>")
@@ -206,7 +206,7 @@ def beautify_stream(stream):
             templ = _(u"<b>Image:</b> %d×%d <i>pixels</i>")
             templ = templ % (par * stream.get_width(), stream.get_height())
         return templ
-    elif type(stream) == gst.pbutils.DiscovererStreamInfo:
+    elif type(stream) == GstPbutils.DiscovererStreamInfo:
         caps = stream.get_caps().to_string()
         if "text" in caps:
             return _("Subtitles")
@@ -223,9 +223,9 @@ def time_to_string(value):
 
     Format HH:MM:SS.XXX
     """
-    if value == gst.CLOCK_TIME_NONE:
+    if value == Gst.CLOCK_TIME_NONE:
         return "--:--:--.---"
-    ms = value / gst.MSECOND
+    ms = value / Gst.MSECOND
     sec = ms / 1000
     ms = ms % 1000
     mins = sec / 60
@@ -239,7 +239,7 @@ def beautify_length(length):
     """
     Converts the given time in nanoseconds to a human readable string
     """
-    sec = length / gst.SECOND
+    sec = length / Gst.SECOND
     mins = sec / 60
     sec = sec % 60
     hours = mins / 60
@@ -291,7 +291,7 @@ def beautify_ETA(length):
     Converts the given time in nanoseconds to a fuzzy estimate,
     intended for progress ETAs, not to indicate a clip's duration.
     """
-    sec = length / gst.SECOND
+    sec = length / Gst.SECOND
     mins = sec / 60
     sec = int(sec % 60)
     hours = int(mins / 60)
@@ -335,7 +335,7 @@ def roundedrec(context, x, y, w, h, r=10):
 
 #--------------------- Gtk widget helpers ------------------------------------#
 def model(columns, data):
-    ret = gtk.ListStore(*columns)
+    ret = Gtk.ListStore(*columns)
     for datum in data:
         ret.append(datum)
     return ret
@@ -364,26 +364,26 @@ def get_value_from_model(model, key):
     for row in model:
         if row[1] == key:
             return str(row[0])
-    if isinstance(key, gst.Fraction):
-        return "%.3f" % Decimal(float(key.num) / key.denom)
+    if isinstance(key, Fraction):
+        return "%.3f" % Decimal(float(key.numerator) / key.denominator)
     return str(key)
 
 #------------------------ encoding datas ----------------------------------------#
 # FIXME This should into a special file
 frame_rates = model((str, object), (
     # Translators: fps is for frames per second
-    (_("%d fps") % 12, gst.Fraction(12.0, 1.0)),
-    (_("%d fps") % 15, gst.Fraction(15.0, 1.0)),
-    (_("%d fps") % 20, gst.Fraction(20.0, 1.0)),
-    (_("%.3f fps") % 23.976, gst.Fraction(24000.0, 1001.0)),
-    (_("%d fps") % 24, gst.Fraction(24.0, 1.0)),
-    (_("%d fps") % 25, gst.Fraction(25.0, 1.0)),
-    (_("%.2f fps") % 29.97, gst.Fraction(30000.0, 1001.0)),
-    (_("%d fps") % 30, gst.Fraction(30.0, 1.0)),
-    (_("%d fps") % 50, gst.Fraction(50.0, 1.0)),
-    (_("%.2f fps") % 59.94, gst.Fraction(60000.0, 1001.0)),
-    (_("%d fps") % 60, gst.Fraction(60.0, 1.0)),
-    (_("%d fps") % 120, gst.Fraction(120.0, 1.0)),
+    (_("%d fps") % 12, Fraction(12.0, 1.0)),
+    (_("%d fps") % 15, Fraction(15.0, 1.0)),
+    (_("%d fps") % 20, Fraction(20.0, 1.0)),
+    (_("%.3f fps") % 23.976, Fraction(24000.0, 1001.0)),
+    (_("%d fps") % 24, Fraction(24.0, 1.0)),
+    (_("%d fps") % 25, Fraction(25.0, 1.0)),
+    (_("%.2f fps") % 29.97, Fraction(30000.0, 1001.0)),
+    (_("%d fps") % 30, Fraction(30.0, 1.0)),
+    (_("%d fps") % 50, Fraction(50.0, 1.0)),
+    (_("%.2f fps") % 59.94, Fraction(60000.0, 1001.0)),
+    (_("%d fps") % 60, Fraction(60.0, 1.0)),
+    (_("%d fps") % 120, Fraction(120.0, 1.0)),
 ))
 
 audio_rates = model((str, int), (
@@ -409,27 +409,27 @@ audio_channels = model((str, int), (
 # FIXME: are we sure the following tables correct?
 
 pixel_aspect_ratios = model((str, object), (
-    (_("Square"), gst.Fraction(1, 1)),
-    (_("480p"), gst.Fraction(10, 11)),
-    (_("480i"), gst.Fraction(8, 9)),
-    (_("480p Wide"), gst.Fraction(40, 33)),
-    (_("480i Wide"), gst.Fraction(32, 27)),
-    (_("576p"), gst.Fraction(12, 11)),
-    (_("576i"), gst.Fraction(16, 15)),
-    (_("576p Wide"), gst.Fraction(16, 11)),
-    (_("576i Wide"), gst.Fraction(64, 45)),
+    (_("Square"), Fraction(1, 1)),
+    (_("480p"), Fraction(10, 11)),
+    (_("480i"), Fraction(8, 9)),
+    (_("480p Wide"), Fraction(40, 33)),
+    (_("480i Wide"), Fraction(32, 27)),
+    (_("576p"), Fraction(12, 11)),
+    (_("576i"), Fraction(16, 15)),
+    (_("576p Wide"), Fraction(16, 11)),
+    (_("576i Wide"), Fraction(64, 45)),
 ))
 
 display_aspect_ratios = model((str, object), (
-    (_("Standard (4:3)"), gst.Fraction(4, 3)),
-    (_("DV (15:11)"), gst.Fraction(15, 11)),
-    (_("DV Widescreen (16:9)"), gst.Fraction(16, 9)),
-    (_("Cinema (1.37)"), gst.Fraction(11, 8)),
-    (_("Cinema (1.66)"), gst.Fraction(166, 100)),
-    (_("Cinema (1.85)"), gst.Fraction(185, 100)),
-    (_("Anamorphic (2.35)"), gst.Fraction(235, 100)),
-    (_("Anamorphic (2.39)"), gst.Fraction(239, 100)),
-    (_("Anamorphic (2.4)"), gst.Fraction(24, 10)),
+    (_("Standard (4:3)"), Fraction(4, 3)),
+    (_("DV (15:11)"), Fraction(15, 11)),
+    (_("DV Widescreen (16:9)"), Fraction(16, 9)),
+    (_("Cinema (1.37)"), Fraction(11, 8)),
+    (_("Cinema (1.66)"), Fraction(166, 100)),
+    (_("Cinema (1.85)"), Fraction(185, 100)),
+    (_("Anamorphic (2.35)"), Fraction(235, 100)),
+    (_("Anamorphic (2.39)"), Fraction(239, 100)),
+    (_("Anamorphic (2.4)"), Fraction(24, 10)),
 ))
 
 

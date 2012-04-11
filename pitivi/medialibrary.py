@@ -24,11 +24,11 @@
 Handles the list of source for a project
 """
 
-import gst
-import ges
-import gobject
-import gtk
-import pango
+from gi.repository import Gst
+from gi.repository import GES
+from gi.repository import GObject
+from gi.repository import Gtk
+from gi.repository import Pango
 import os
 import time
 
@@ -106,7 +106,7 @@ ui = '''
 </ui>
 '''
 
-INVISIBLE = gtk.gdk.pixbuf_new_from_file(os.path.join(get_pixmap_dir(),
+INVISIBLE = GdkPixbuf.Pixbuf.new_from_file(os.path.join(get_pixmap_dir(),
     "invisible.png"))
 
 
@@ -115,7 +115,7 @@ class MediaLibraryError(Exception):
 
 
 class MediaLibrary(Signallable, Loggable):
-    discovererClass = gst.pbutils.Discoverer
+    discovererClass = GstPbutils.Discoverer.new
 
     """
     Contains the sources for a project, stored as SourceFactory objects.
@@ -155,7 +155,7 @@ class MediaLibrary(Signallable, Loggable):
         self._ordered_sources = []
         self._resetImportCounters()
 
-        self.discoverer = self.discovererClass(gst.SECOND)
+        self.discoverer = self.discovererClass(Gst.SECOND)
         self.discoverer.connect("discovered", self.addDiscovererInfo)
         self.discoverer.connect("finished", self.finishDiscovererCb)
         self.discoverer.start()
@@ -255,15 +255,15 @@ class MediaLibrary(Signallable, Loggable):
         return self._ordered_sources
 
 
-class MediaLibraryWidget(gtk.VBox, Loggable):
+class MediaLibraryWidget(Gtk.VBox, Loggable):
     """ Widget for listing sources """
 
     __gsignals__ = {
-        'play': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE,
-                (gobject.TYPE_PYOBJECT,))}
+        'play': (GObject.SignalFlags.RUN_LAST, None,
+                (GObject.TYPE_PYOBJECT,))}
 
     def __init__(self, instance, uiman):
-        gtk.VBox.__init__(self)
+        Gtk.VBox.__init__(self)
         Loggable.__init__(self)
 
         self.app = instance
@@ -275,24 +275,24 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
 
         # Store
         # icon, infotext, objectfactory, uri, length
-        self.storemodel = gtk.ListStore(gtk.gdk.Pixbuf, gtk.gdk.Pixbuf,
+        self.storemodel = Gtk.ListStore(GdkPixbuf.Pixbuf, GdkPixbuf.Pixbuf,
             str, object, str, str, str, str)
 
         # Scrolled Windows
-        self.treeview_scrollwin = gtk.ScrolledWindow()
-        self.treeview_scrollwin.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        self.treeview_scrollwin.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        self.treeview_scrollwin = Gtk.ScrolledWindow()
+        self.treeview_scrollwin.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.treeview_scrollwin.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
 
-        self.iconview_scrollwin = gtk.ScrolledWindow()
-        self.iconview_scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.iconview_scrollwin.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        self.iconview_scrollwin = Gtk.ScrolledWindow()
+        self.iconview_scrollwin.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        self.iconview_scrollwin.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
 
         # Popup Menu
-        self.popup = gtk.Menu()
-        self.popup_remitem = gtk.ImageMenuItem(_("_Remove from Project"))
-        self.popup_playmenuitem = gtk.MenuItem(_("_Preview Clip"))
-        self.popup_clipprop = gtk.MenuItem(_("_Clip Properties..."))
-        self.popup_insertEnd = gtk.MenuItem(_("Insert at _End of Timeline"))
+        self.popup = Gtk.Menu()
+        self.popup_remitem = Gtk.ImageMenuItem(_("_Remove from Project"))
+        self.popup_playmenuitem = Gtk.MenuItem(_("_Preview Clip"))
+        self.popup_clipprop = Gtk.MenuItem(_("_Clip Properties..."))
+        self.popup_insertEnd = Gtk.MenuItem(_("Insert at _End of Timeline"))
         self.popup_remitem.connect("activate", self._removeClickedCb)
         self.popup_playmenuitem.connect("activate", self._previewClickedCb)
         self.popup_clipprop.connect("activate", self._clipPropertiesCb)
@@ -307,18 +307,18 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         self._importDialog = None
 
         # Search/filter box
-        self.search_hbox = gtk.HBox()
+        self.search_hbox = Gtk.HBox()
         self.search_hbox.set_spacing(SPACING)
         self.search_hbox.set_border_width(3)  # Prevents being flush against the notebook
-        searchLabel = gtk.Label(_("Search:"))
-        searchEntry = gtk.Entry()
-        searchEntry.set_icon_from_stock(gtk.ENTRY_ICON_SECONDARY, "gtk-clear")
+        searchLabel = Gtk.Label(label=_("Search:"))
+        searchEntry = Gtk.Entry()
+        searchEntry.set_icon_from_stock(Gtk.EntryIconPosition.SECONDARY, "gtk-clear")
         searchEntry.connect("changed", self._searchEntryChangedCb)
         searchEntry.connect("focus-in-event", self._disableKeyboardShortcutsCb)
         searchEntry.connect("focus-out-event", self._enableKeyboardShortcutsCb)
         searchEntry.connect("icon-press", self._searchEntryIconClickedCb)
-        self.search_hbox.pack_start(searchLabel, expand=False)
-        self.search_hbox.pack_end(searchEntry, expand=True)
+        self.search_hbox.pack_start(searchLabel, False, True, 0)
+        self.search_hbox.pack_end(searchEntry, True, True, 0)
         # Filtering model for the search box.
         # Use this instead of using self.storemodel directly
         self.modelFilter = self.storemodel.filter_new()
@@ -326,7 +326,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
 
         # TreeView
         # Displays icon, name, type, length
-        self.treeview = gtk.TreeView(self.modelFilter)
+        self.treeview = Gtk.TreeView(self.modelFilter)
         self.treeview_scrollwin.add(self.treeview)
         self.treeview.connect("button-press-event", self._treeViewButtonPressEventCb)
         self.treeview.connect("focus-in-event", self._disableKeyboardShortcutsCb)
@@ -336,60 +336,60 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         self.treeview.set_headers_visible(False)
         self.treeview.set_property("search_column", COL_SEARCH_TEXT)
         tsel = self.treeview.get_selection()
-        tsel.set_mode(gtk.SELECTION_MULTIPLE)
+        tsel.set_mode(Gtk.SelectionMode.MULTIPLE)
         tsel.connect("changed", self._viewSelectionChangedCb)
 
-        pixbufcol = gtk.TreeViewColumn(_("Icon"))
+        pixbufcol = Gtk.TreeViewColumn(_("Icon"))
         pixbufcol.set_expand(False)
         pixbufcol.set_spacing(SPACING)
         self.treeview.append_column(pixbufcol)
-        pixcell = gtk.CellRendererPixbuf()
+        pixcell = Gtk.CellRendererPixbuf()
         pixcell.props.xpad = 6
-        pixbufcol.pack_start(pixcell)
+        pixbufcol.pack_start(pixcell, True)
         pixbufcol.add_attribute(pixcell, 'pixbuf', COL_ICON)
 
-        namecol = gtk.TreeViewColumn(_("Information"))
+        namecol = Gtk.TreeViewColumn(_("Information"))
         self.treeview.append_column(namecol)
         namecol.set_expand(True)
         namecol.set_spacing(SPACING)
-        namecol.set_sizing(gtk.TREE_VIEW_COLUMN_GROW_ONLY)
+        namecol.set_sizing(Gtk.TreeViewColumnSizing.GROW_ONLY)
         namecol.set_min_width(150)
-        txtcell = gtk.CellRendererText()
-        txtcell.set_property("ellipsize", pango.ELLIPSIZE_END)
-        namecol.pack_start(txtcell)
+        txtcell = Gtk.CellRendererText()
+        txtcell.set_property("ellipsize", Pango.EllipsizeMode.END)
+        namecol.pack_start(txtcell, True)
         namecol.add_attribute(txtcell, "markup", COL_INFOTEXT)
 
-        namecol = gtk.TreeViewColumn(_("Duration"))
+        namecol = Gtk.TreeViewColumn(_("Duration"))
         namecol.set_expand(False)
         self.treeview.append_column(namecol)
-        txtcell = gtk.CellRendererText()
+        txtcell = Gtk.CellRendererText()
         txtcell.set_property("yalign", 0.0)
-        namecol.pack_start(txtcell)
+        namecol.pack_start(txtcell, True)
         namecol.add_attribute(txtcell, "markup", COL_LENGTH)
 
         # IconView
-        self.iconview = gtk.IconView(self.modelFilter)
+        self.iconview = Gtk.IconView.new_with_model(self.modelFilter)
         self.iconview_scrollwin.add(self.iconview)
         self.iconview.connect("button-press-event", self._iconViewButtonPressEventCb)
         self.iconview.connect("focus-in-event", self._disableKeyboardShortcutsCb)
         self.iconview.connect("focus-out-event", self._enableKeyboardShortcutsCb)
         self.iconview.connect("selection-changed", self._viewSelectionChangedCb)
-        self.iconview.set_orientation(gtk.ORIENTATION_VERTICAL)
+        self.iconviewset_item_orientation(Gtk.Orientation.VERTICAL)
         self.iconview.set_property("has_tooltip", True)
         self.iconview.set_tooltip_column(COL_INFOTEXT)
         self.iconview.set_text_column(COL_SHORT_TEXT)
         self.iconview.set_pixbuf_column(COL_ICON_LARGE)
-        self.iconview.set_selection_mode(gtk.SELECTION_MULTIPLE)
+        self.iconview.set_selection_mode(Gtk.SelectionMode.MULTIPLE)
         self.iconview.set_item_width(138)  # Needs to be icon width +10
 
         # Explanatory message InfoBar
-        self.infobar = gtk.InfoBar()
+        self.infobar = Gtk.InfoBar()
 
-        txtlabel = gtk.Label()
+        txtlabel = Gtk.Label()
         txtlabel.set_padding(PADDING, PADDING)
         txtlabel.set_line_wrap(True)
-        txtlabel.set_line_wrap_mode(pango.WRAP_WORD)
-        txtlabel.set_justify(gtk.JUSTIFY_CENTER)
+        txtlabel.set_line_wrap_mode(Pango.WrapMode.WORD)
+        txtlabel.set_justify(Gtk.Justification.CENTER)
         txtlabel.set_text(
             _('Add media to your project by dragging files and folders here or '
               'by using the "Import Files..." button.'))
@@ -397,16 +397,16 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         self.txtlabel = txtlabel
 
         # The infobar that shows up if there are _errors when importing clips
-        self._import_warning_infobar = gtk.InfoBar()
-        self._import_warning_infobar.set_message_type(gtk.MESSAGE_WARNING)
+        self._import_warning_infobar = Gtk.InfoBar()
+        self._import_warning_infobar.set_message_type(Gtk.MessageType.WARNING)
         content_area = self._import_warning_infobar.get_content_area()
         actions_area = self._import_warning_infobar.get_action_area()
-        self._warning_label = gtk.Label()
+        self._warning_label = Gtk.Label()
         self._warning_label.set_line_wrap(True)
-        self._warning_label.set_line_wrap_mode(pango.WRAP_WORD)
-        self._warning_label.set_justify(gtk.JUSTIFY_CENTER)
-        self._view_error_btn = gtk.Button()
-        self._hide_infobar_btn = gtk.Button()
+        self._warning_label.set_line_wrap_mode(Pango.WrapMode.WORD)
+        self._warning_label.set_justify(Gtk.Justification.CENTER)
+        self._view_error_btn = Gtk.Button()
+        self._hide_infobar_btn = Gtk.Button()
         self._hide_infobar_btn.set_label(_("Hide"))
         self._view_error_btn.connect("clicked", self._viewErrorsButtonClickedCb)
         self._hide_infobar_btn.connect("clicked", self._hideInfoBarClickedCb)
@@ -415,7 +415,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         actions_area.add(self._hide_infobar_btn)
 
         # The _progressbar that shows up when importing clips
-        self._progressbar = gtk.ProgressBar()
+        self._progressbar = Gtk.ProgressBar()
 
         # Connect to project.  We must remove and reset the callbacks when
         # changing project.
@@ -429,12 +429,12 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         self.videofilepixbuf = self._getIcon("video-x-generic", "pitivi-video.png")
 
         # Drag and Drop
-        self.drag_dest_set(gtk.DEST_DEFAULT_DROP | gtk.DEST_DEFAULT_MOTION,
+        Gtk.drag_dest_set(self, Gtk.DestDefaults.DROP | Gtk.DestDefaults.MOTION,
                            [dnd.URI_TUPLE, dnd.FILE_TUPLE],
-                           gtk.gdk.ACTION_COPY)
+                           Gdk.DragAction.COPY)
         self.connect("drag_data_received", self._dndDataReceivedCb)
 
-        self.treeview.drag_source_set(0, [], gtk.gdk.ACTION_COPY)
+        self.treeview.drag_source_set(0, [], Gdk.DragAction.COPY)
         self.treeview.connect("motion-notify-event",
             self._treeViewMotionNotifyEventCb)
         self.treeview.connect("button-release-event",
@@ -442,7 +442,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         self.treeview.connect("drag_begin", self._dndDragBeginCb)
         self.treeview.connect("drag_data_get", self._dndDataGetCb)
 
-        self.iconview.drag_source_set(0, [], gtk.gdk.ACTION_COPY)
+        self.iconview.drag_source_set(0, [], Gdk.DragAction.COPY)
         self.iconview.connect("motion-notify-event",
             self._iconViewMotionNotifyEventCb)
         self.iconview.connect("button-release-event",
@@ -455,11 +455,11 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
 
         # always available
         actions = (
-            ("ImportSources", gtk.STOCK_ADD, _("_Import Files..."),
+            ("ImportSources", Gtk.STOCK_ADD, _("_Import Files..."),
             None, _("Add media files to your project"),
             self._importSourcesCb),
 
-            ("ImportSourcesFolder", gtk.STOCK_ADD, _("Import _Folders..."),
+            ("ImportSourcesFolder", Gtk.STOCK_ADD, _("Import _Folders..."),
             None, _("Add the contents of a folder as clips in your project"),
             self._importSourcesFolderCb),
 
@@ -471,25 +471,25 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
 
         # only available when selection is non-empty
         selection_actions = (
-            ("RemoveSources", gtk.STOCK_DELETE, _("_Remove from Project"),
+            ("RemoveSources", Gtk.STOCK_DELETE, _("_Remove from Project"),
             "<Control>Delete", None, self._removeSourcesCb),
 
-            ("InsertEnd", gtk.STOCK_COPY, _("Insert at _End of Timeline"),
+            ("InsertEnd", Gtk.STOCK_COPY, _("Insert at _End of Timeline"),
             "Insert", None, self._insertEndCb),
 
-            ("PreviewClip", gtk.STOCK_MEDIA_PLAY, _("_Preview Clip"),
+            ("PreviewClip", Gtk.STOCK_MEDIA_PLAY, _("_Preview Clip"),
             None, None, self._previewClickedCb),
 
             ("ClipProps", None, _("_Clip Properties..."),
             None, None, self._previewClickedCb),
         )
 
-        actiongroup = gtk.ActionGroup("medialibrarypermanent")
+        actiongroup = Gtk.ActionGroup("medialibrarypermanent")
         actiongroup.add_actions(actions)
         actiongroup.get_action("ImportSources").props.is_important = True
         uiman.insert_action_group(actiongroup, 0)
 
-        self.selection_actions = gtk.ActionGroup("medialibraryselection")
+        self.selection_actions = Gtk.ActionGroup("medialibraryselection")
         self.selection_actions.add_actions(selection_actions)
         self.selection_actions.set_sensitive(False)
         uiman.insert_action_group(self.selection_actions, 0)
@@ -498,10 +498,10 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         # clip view menu items
         view_menu_item = uiman.get_widget('/MainMenuBar/View')
         view_menu = view_menu_item.get_submenu()
-        seperator = gtk.SeparatorMenuItem()
-        self.treeview_menuitem = gtk.RadioMenuItem(None,
+        seperator = Gtk.SeparatorMenuItem()
+        self.treeview_menuitem = Gtk.RadioMenuItem(None,
                 _("Show Clips as a List"))
-        self.iconview_menuitem = gtk.RadioMenuItem(self.treeview_menuitem,
+        self.iconview_menuitem = Gtk.RadioMenuItem(self.treeview_menuitem,
                 _("Show Clips as Icons"))
 
         # update menu items with current clip view before we connect to item
@@ -525,12 +525,12 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         seperator.show()
 
         # add all child widgets
-        self.pack_start(self.infobar, expand=False, fill=False)
-        self.pack_start(self._import_warning_infobar, expand=False, fill=False)
-        self.pack_start(self.search_hbox, expand=False)
-        self.pack_start(self.iconview_scrollwin)
-        self.pack_start(self.treeview_scrollwin)
-        self.pack_start(self._progressbar, expand=False)
+        self.pack_start(self.infobar, False, False, 0)
+        self.pack_start(self._import_warning_infobar, False, False, 0)
+        self.pack_start(self.search_hbox, False, True, 0)
+        self.pack_start(self.iconview_scrollwin, True, True, 0)
+        self.pack_start(self.treeview_scrollwin, True, True, 0)
+        self.pack_start(self._progressbar, False, True, 0)
 
         # display the help text
         self.clip_view = self.settings.lastClipView
@@ -589,7 +589,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             return
 
         uri = self._sources_to_insert.pop()
-        source = ges.TimelineFileSource(uri)
+        source = GES.TimelineFileSource.new(uri)
         layer = timeline.get_layers()[0]  # FIXME Get the longest layer
         layer.add_object(source)
 
@@ -633,16 +633,16 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             return text in model.get_value(iter, COL_INFOTEXT).lower()
 
     def _getIcon(self, iconname, alternate):
-        icontheme = gtk.icon_theme_get_default()
+        icontheme = Gtk.IconTheme.get_default()
         pixdir = get_pixmap_dir()
         icon = None
         try:
             icon = icontheme.load_icon(iconname, 32, 0)
         except:
-            # empty except clause is bad but load_icon raises gio.Error.
+            # empty except clause is bad but load_icon raises Gio.Error.
             # Right, *gio*.
             if not icon:
-                icon = gtk.gdk.pixbuf_new_from_file(os.path.join(pixdir, alternate))
+                icon = GdkPixbuf.Pixbuf.new_from_file(os.path.join(pixdir, alternate))
         return icon
 
     def _connectToProject(self, project):
@@ -715,22 +715,22 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             return
 
         if select_folders:
-            chooser_action = gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER
+            chooser_action = Gtk.FileChooserAction.SELECT_FOLDER
             dialogtitle = _("Select One or More Folders")
         else:
-            chooser_action = gtk.FILE_CHOOSER_ACTION_OPEN
+            chooser_action = Gtk.FileChooserAction.OPEN
             dialogtitle = _("Select One or More Files")
 
-        close_after = gtk.CheckButton(_("Close after importing files"))
+        close_after = Gtk.CheckButton(_("Close after importing files"))
         close_after.set_active(self.app.settings.closeImportDialog)
 
-        self._importDialog = gtk.FileChooserDialog(dialogtitle, None,
+        self._importDialog = Gtk.FileChooserDialog(dialogtitle, None,
                                            chooser_action,
-                                           (gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE,
-                                            gtk.STOCK_ADD, gtk.RESPONSE_OK))
+                                           (Gtk.STOCK_CLOSE, Gtk.ResponseType.CLOSE,
+                                            Gtk.STOCK_ADD, Gtk.ResponseType.OK))
         self._importDialog.set_icon_name("pitivi")
         self._importDialog.props.extra_widget = close_after
-        self._importDialog.set_default_response(gtk.RESPONSE_OK)
+        self._importDialog.set_default_response(Gtk.ResponseType.OK)
         self._importDialog.set_select_multiple(True)
         self._importDialog.set_modal(False)
         self._importDialog.set_current_folder(self.app.settings.lastImportFolder)
@@ -768,7 +768,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         # thumbnails directory (~/.thumbnails). The filenames are simply
         # the file URI hashed with md5, so we can retrieve them easily.
         if [i for i in info.get_stream_list() if\
-            isinstance(i, gst.pbutils.DiscovererVideoInfo)]:
+            isinstance(i, GstPbutils.DiscovererVideoInfo)]:
             thumbnail_hash = md5(info.get_uri()).hexdigest()
             thumb_dir = os.path.expanduser("~/.thumbnails/")
             thumb_path_normal = thumb_dir + "normal/" + thumbnail_hash + ".png"
@@ -777,11 +777,11 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             # However, the fdo spec specifies 128 as normal and 256 as large.
             # We will thus simply use the "normal" size and scale it down.
             try:
-                thumbnail = gtk.gdk.pixbuf_new_from_file(thumb_path_normal)
+                thumbnail = GdkPixbuf.Pixbuf.new_from_file(thumb_path_normal)
                 thumbnail_large = thumbnail
                 thumbnail_height = int(thumbnail.get_height() / 2)
                 thumbnail = thumbnail.scale_simple(64, thumbnail_height, \
-                    gtk.gdk.INTERP_BILINEAR)
+                    GdkPixbuf.InterpType.BILINEAR)
             except:
                 # TODO gst discoverer should create missing thumbnails.
                 thumbnail = self.videofilepixbuf
@@ -790,7 +790,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             thumbnail = self.audiofilepixbuf
             thumbnail_large = self.audiofilepixbuf
 
-        if info.get_duration() == gst.CLOCK_TIME_NONE:
+        if info.get_duration() == Gst.CLOCK_TIME_NONE:
             duration = ''
         else:
             duration = beautify_length(info.get_duration())
@@ -880,7 +880,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
 
     def _dialogBoxResponseCb(self, dialogbox, response, select_folders):
         self.debug("response:%r", response)
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             lastfolder = dialogbox.get_current_folder()
             self.app.settings.lastImportFolder = lastfolder
             self.app.settings.closeImportDialog = \
@@ -913,7 +913,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         # use row references so we don't have to care if a path has been removed
         rows = []
         for path in paths:
-            row = gtk.TreeRowReference(model, path)
+            row = Gtk.TreeRowReference(model, path)
             rows.append(row)
 
         self.app.action_log.begin("remove clip from source list")
@@ -1029,11 +1029,11 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         result = view.get_path_at_pos(int(event.x), int(event.y))
         if result:
             path = result[0]
-            if isinstance(view, gtk.TreeView):
+            if isinstance(view, Gtk.TreeView):
                 selection = view.get_selection()
 
                 return selection.path_is_selected(path) and selection.count_selected_rows() > 0
-            elif isinstance(view, gtk.IconView):
+            elif isinstance(view, Gtk.IconView):
                 selection = view.get_selected_items()
 
                 return view.path_is_selected(path) and len(selection)
@@ -1064,13 +1064,13 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
                 self.popup_playmenuitem.set_sensitive(True)
                 self.popup_clipprop.set_sensitive(True)
         elif view != None and (not self._nothingUnderMouse(view, event)):
-            if not event.state & (gtk.gdk.CONTROL_MASK | gtk.gdk.SHIFT_MASK):
+            if not event.get_state() & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK):
                 # An item was previously selected, and the user
                 # right-clicked on a different item (selecting it).
                 self._viewUnselectAll()
                 multiple_selected = False
             elif self.clip_view == SHOW_TREEVIEW and self._viewHasSelection() \
-                    and (event.state & gtk.gdk.SHIFT_MASK):
+                    and (event.get_state() & Gdk.ModifierType.SHIFT_MASK):
                 # FIXME: when does this section ever get called?
                 selection = self.treeview.get_selection()
                 start_path = self._viewGetFirstSelected()
@@ -1123,7 +1123,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
     def _treeViewButtonPressEventCb(self, treeview, event):
         chain_up = True
 
-        if event.type == gtk.gdk._2BUTTON_PRESS:
+        if event.type == Gdk.BUTTON_SECONDARY:
             if self.getSelectedPaths() != []:
                 # It is possible to double-click outside of clips!
                 self._previewClickedCb()
@@ -1134,7 +1134,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
 
         else:
 
-            if not event.state & (gtk.gdk.CONTROL_MASK | gtk.gdk.SHIFT_MASK):
+            if not event.get_state() & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK):
                 chain_up = not self._rowUnderMouseSelected(treeview, event)
 
             self._dragStarted = False
@@ -1144,7 +1144,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             self._dragY = int(event.y)
 
         if chain_up:
-            gtk.TreeView.do_button_press_event(treeview, event)
+            Gtk.TreeView.do_button_press_event(treeview, event)
         else:
             treeview.grab_focus()
 
@@ -1163,7 +1163,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             int(event.x), int(event.y)):
             context = treeview.drag_begin(
                 [dnd.URI_TUPLE, dnd.FILESOURCE_TUPLE],
-                gtk.gdk.ACTION_COPY,
+                Gdk.DragAction.COPY,
                 self._dragButton,
                 event)
             self._dragStarted = True
@@ -1204,7 +1204,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             int(event.x), int(event.y)):
             context = iconview.drag_begin(
                 [dnd.URI_TUPLE, dnd.FILESOURCE_TUPLE],
-                gtk.gdk.ACTION_COPY,
+                Gdk.DragAction.COPY,
                 self._dragButton,
                 event)
             self._dragStarted = True
@@ -1213,7 +1213,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
     def _iconViewButtonPressEventCb(self, iconview, event):
         chain_up = True
 
-        if event.type == gtk.gdk._2BUTTON_PRESS:
+        if event.type == Gdk.BUTTON_SECONDARY:
             if self.getSelectedPaths() != []:
                 # It is possible to double-click outside of clips!
                 self._previewClickedCb()
@@ -1222,7 +1222,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             self._viewShowPopup(iconview, event)
             chain_up = False
         else:
-            if not event.state & (gtk.gdk.CONTROL_MASK | gtk.gdk.SHIFT_MASK):
+            if not event.get_state() & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK):
                 chain_up = not self._rowUnderMouseSelected(iconview, event)
 
             self._dragStarted = False
@@ -1232,7 +1232,7 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             self._dragY = int(event.y)
 
         if chain_up:
-            gtk.IconView.do_button_press_event(iconview, event)
+            Gtk.IconView.do_button_press_event(iconview, event)
         else:
             iconview.grab_focus()
 
@@ -1354,4 +1354,4 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         selection.set(selection.target, 8, '\n'.join(uris))
         context.set_icon_pixbuf(INVISIBLE, 0, 0)
 
-gobject.type_register(MediaLibraryWidget)
+GObject.type_register(MediaLibraryWidget)

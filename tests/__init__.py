@@ -1,6 +1,6 @@
-import gobject
+from gi.repository import GObject
 # This call has to be made before any "import gst" call!
-gobject.threads_init()
+GObject.threads_init()
 
 from pitivi.check import initial_checks
 

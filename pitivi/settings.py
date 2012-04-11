@@ -24,7 +24,7 @@ Settings
 """
 
 import os
-import gst
+from gi.repository import Gst
 from ConfigParser import SafeConfigParser, ParsingError
 import xdg.BaseDirectory as xdg_dirs  # Freedesktop directories spec
 
@@ -345,8 +345,8 @@ class MultimediaSettings(Signallable, Loggable):
         self.videowidth = 720
         self.videoheight = 576
         self.render_scale = 100
-        self.videorate = gst.Fraction(25, 1)
-        self.videopar = gst.Fraction(16, 15)
+        self.videorate = Fraction(25, 1)
+        self.videopar = Fraction(16, 15)
         self.audiochannels = 2
         self.audiorate = 44100
         self.audiodepth = 16
@@ -365,8 +365,8 @@ class MultimediaSettings(Signallable, Loggable):
         ret.videowidth = self.videowidth
         ret.videoheight = self.videoheight
         ret.render_scale = self.render_scale
-        ret.videorate = gst.Fraction(self.videorate.num, self.videorate.denom)
-        ret.videopar = gst.Fraction(self.videopar.num, self.videopar.denom)
+        ret.videorate = Fraction(self.videorate.numerator, self.videorate.denominator)
+        ret.videopar = Fraction(self.videopar.numerator, self.videopar.denominator)
         ret.audiochannels = self.audiochannels
         ret.audiorate = self.audiorate
         ret.audiodepth = self.audiodepth
@@ -379,7 +379,7 @@ class MultimediaSettings(Signallable, Loggable):
         return ret
 
     def getDAR(self):
-        return gst.Fraction(self.videowidth, self.videoheight) * self.videopar
+        return Fraction(self.videowidth, self.videoheight) * self.videopar
 
     def __str__(self):
         """
@@ -421,10 +421,10 @@ class MultimediaSettings(Signallable, Loggable):
         videowidth, videoheight = self.getVideoWidthAndHeight(render=render)
         vstr = "width=%d,height=%d,pixel-aspect-ratio=%d/%d,framerate=%d/%d" % (
                 videowidth, videoheight,
-                self.videopar.num, self.videopar.denom,
-                self.videorate.num, self.videorate.denom)
+                self.videopar.numerator, self.videopar.denominator,
+                self.videorate.numerator, self.videorate.denominator)
         caps_str = "video/x-raw-yuv,%s;video/x-raw-rgb,%s" % (vstr, vstr)
-        video_caps = gst.caps_from_string(caps_str)
+        video_caps = Gst.caps_from_string(caps_str)
         if self.vencoder:
             return get_compatible_sink_caps(self.vencoder, video_caps)
         return video_caps
@@ -434,7 +434,7 @@ class MultimediaSettings(Signallable, Loggable):
         # TODO: Figure out why including 'depth' causes pipeline failures:
         astr = "rate=%d,channels=%d" % (self.audiorate, self.audiochannels)
         caps_str = "audio/x-raw-int,%s;audio/x-raw-float,%s" % (astr, astr)
-        audio_caps = gst.caps_from_string(caps_str)
+        audio_caps = Gst.caps_from_string(caps_str)
         if self.aencoder:
             return get_compatible_sink_caps(self.aencoder, audio_caps)
         return audio_caps

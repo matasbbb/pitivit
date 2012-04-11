@@ -20,7 +20,7 @@
 # Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-import gtk
+from gi.repository import Gtk
 import os
 
 from pitivi.configure import get_ui_dir
@@ -34,7 +34,7 @@ class DepsManager(object):
 
     def __init__(self, app):
         self.app = app
-        self.builder = gtk.Builder()
+        self.builder = Gtk.Builder()
         self.builder.add_from_file(os.path.join(get_ui_dir(), "depsmanager.ui"))
         self.builder.connect_signals(self)
         self.window = self.builder.get_object("window1")
@@ -89,5 +89,5 @@ class DepsManager(object):
         self.window.hide()
 
     def _installFailedCb(self, unused_exception):
-        """Handle the failure of installing packages."""
+        """Handle the failure of installing packaGES."""
         self.show()

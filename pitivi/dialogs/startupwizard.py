@@ -20,7 +20,7 @@
 # Boston, MA 02110-1301, USA.
 
 import os
-import gtk
+from gi.repository import Gtk
 
 from gettext import gettext as _
 
@@ -45,7 +45,7 @@ class StartUpWizard(object):
 
     def __init__(self, app):
         self.app = app
-        self.builder = gtk.Builder()
+        self.builder = Gtk.Builder()
         self.builder.add_from_file(os.path.join(get_ui_dir(), "startupwizard.ui"))
         self.builder.connect_signals(self)
 
@@ -54,7 +54,7 @@ class StartUpWizard(object):
         self.recent_chooser = self.builder.get_object("recentchooser2")
         # FIXME: gtk creates a combo box with only one item, but there is no
         # simple way to hide it.
-        filter = gtk.RecentFilter()
+        filter = Gtk.RecentFilter()
         filter.set_name(_("Projects"))
         filter.add_pattern("*.xptv")
         self.recent_chooser.add_filter(filter)
@@ -84,7 +84,7 @@ class StartUpWizard(object):
 
     def _keyPressCb(self, widget, event):
         """Handle a key press event on the dialog."""
-        if event.keyval == gtk.keysyms.Escape:
+        if event.keyval == Gdk.KEY_Escape:
             # The user pressed "Esc".
             self.app.projectManager.newBlankProject()
 

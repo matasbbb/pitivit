@@ -24,12 +24,12 @@
 """
 Main application
 """
-import gobject
-import gtk
+from gi.repository import GObject
+from gi.repository import Gtk
 import os
 import sys
 import urllib
-import ges
+from gi.repository import GES
 
 from gettext import gettext as _
 from optparse import OptionParser
@@ -212,7 +212,7 @@ class InteractivePitivi(Pitivi):
 
     def __init__(self, debug=False):
         Pitivi.__init__(self)
-        self.mainloop = gobject.MainLoop()
+        self.mainloop = GObject.MainLoop()
         self.actioner = None
         self.gui = None
 
@@ -267,8 +267,8 @@ class GuiPitivi(InteractivePitivi):
         self._showGui()
 
     def _showStartupError(self, message, detail):
-        dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
-                                   buttons=gtk.BUTTONS_OK)
+        dialog = Gtk.MessageDialog(type=Gtk.MessageType.ERROR,
+                                   buttons=Gtk.ButtonsType.OK)
         dialog.set_icon_name("pitivi")
         dialog.set_markup("<b>" + message + "</b>")
         dialog.format_secondary_text(detail)
@@ -278,7 +278,7 @@ class GuiPitivi(InteractivePitivi):
         self.shutdown()
 
     def _createGui(self):
-        """Returns a gtk.Widget which represents the UI."""
+        """Returns a Gtk.Widget which represents the UI."""
         raise NotImplementedError()
 
     def _showGui(self):
@@ -331,7 +331,7 @@ class ProjectCreatorGuiPitivi(FullGuiPitivi):
         if self._maybePopStartupUri(startup_uris, info.get_uri()) \
                 and add_to_timeline:
             self.action_log.begin("add clip")
-            src = ges.TimelineFileSource(info.get_uri())
+            src = GES.TimelineFileSource.new(info.get_uri())
             src.set_property("priority", 1)
             self.current.timeline.get_layers()[0].add_object(src)
             self.action_log.commit()

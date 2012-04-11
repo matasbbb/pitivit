@@ -22,10 +22,10 @@
 """
 Class handling the midle pane
 """
-import gtk
-import pango
+from gi.repository import Gtk
+from gi.repository import Pango
 import os
-import ges
+from gi.repository import GES
 
 from gettext import gettext as _
 
@@ -57,38 +57,38 @@ class ClipPropertiesError(Exception):
 
 def compare_type(track, effect_type):
 
-    if track.props.track_type == ges.TRACK_TYPE_AUDIO and \
+    if track.props.track_type == GES.TRACK_TYPE_AUDIO and \
             effect_type == AUDIO_EFFECT:
         return True
-    elif track.props.track_type == ges.TRACK_TYPE_VIDEO and \
+    elif track.props.track_type == GES.TRACK_TYPE_VIDEO and \
              effect_type == VIDEO_EFFECT:
         return True
     return False
 
 
-class ClipProperties(gtk.ScrolledWindow, Loggable):
+class ClipProperties(Gtk.ScrolledWindow, Loggable):
     """
     Widget for configuring clips properties
     """
 
     def __init__(self, instance, uiman):
-        gtk.ScrolledWindow.__init__(self)
+        Gtk.ScrolledWindow.__init__(self)
         Loggable.__init__(self)
 
-        self.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        self.set_shadow_type(gtk.SHADOW_NONE)
+        self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.set_shadow_type(Gtk.ShadowType.NONE)
 
-        vp = gtk.Viewport()
-        vp.set_shadow_type(gtk.SHADOW_NONE)
+        vp = Gtk.Viewport()
+        vp.set_shadow_type(Gtk.ShadowType.NONE)
         self.add(vp)
 
         self.app = instance
         self.settings = instance.settings
         self._project = None
         self.transformation_expander = None
-        self.info_bar_box = gtk.VBox()
+        self.info_bar_box = Gtk.VBox()
 
-        vbox = gtk.VBox()
+        vbox = Gtk.VBox()
         vbox.set_homogeneous(False)
         vp.add(vbox)
 
@@ -97,14 +97,14 @@ class ClipProperties(gtk.ScrolledWindow, Loggable):
         self.effect_expander = EffectProperties(instance,
                 self.effect_properties_handling, self)
 
-        vbox.pack_start(self.info_bar_box, expand=False, fill=True)
+        vbox.pack_start(self.info_bar_box, False, True, 0)
 
         self.transformation_expander = TransformationProperties(
             instance, instance.action_log)
-        vbox.pack_start(self.transformation_expander, expand=False, fill=False)
+        vbox.pack_start(self.transformation_expander, False, False, 0)
         self.transformation_expander.show()
 
-        vbox.pack_end(self.effect_expander, expand=True, fill=True)
+        vbox.pack_end(self.effect_expander, True, True, 0)
         vbox.set_spacing(SPACING)
 
         self.info_bar_box.show()
@@ -126,31 +126,31 @@ class ClipProperties(gtk.ScrolledWindow, Loggable):
     project = property(_getProject, _setProject)
 
     def addInfoBar(self, text):
-        info_bar = gtk.InfoBar()
+        info_bar = Gtk.InfoBar()
 
-        label = gtk.Label()
+        label = Gtk.Label()
         label.set_padding(PADDING, PADDING)
         label.set_line_wrap(True)
-        label.set_line_wrap_mode(pango.WRAP_WORD)
-        label.set_justify(gtk.JUSTIFY_CENTER)
+        label.set_line_wrap_mode(Pango.WrapMode.WORD)
+        label.set_justify(Gtk.Justification.CENTER)
         label.set_text(text)
 
         info_bar.add(label)
-        self.info_bar_box.pack_start(info_bar, expand=False, fill=False)
+        self.info_bar_box.pack_start(info_bar, False, False, 0)
 
         return label, info_bar
 
 
-class EffectProperties(gtk.Expander, gtk.HBox):
+class EffectProperties(Gtk.Expander, Gtk.HBox):
     """
     Widget for viewing and configuring effects
     """
-    # Note: This should be inherited from gtk.Expander when we get other things
+    # Note: This should be inherited from Gtk.Expander when we get other things
     # to put in ClipProperties, that is why this is done this way
 
     def __init__(self, instance, effect_properties_handling, clip_properties):
-        gtk.Expander.__init__(self)
-        gtk.HBox.__init__(self)
+        Gtk.Expander.__init__(self)
+        Gtk.HBox.__init__(self)
         #self.set_expanded(True)
 
         self.selected_effects = []
@@ -169,38 +169,38 @@ class EffectProperties(gtk.Expander, gtk.HBox):
         # We use the seeker to flush the pipeline when needed
         self._seeker = Seeker()
 
-        self._vcontent = gtk.VPaned()
+        self._vcontent = Gtk.VPaned()
         self.add(self._vcontent)
 
-        self._table = gtk.Table(3, 1, False)
+        self._table = Gtk.Table(3, 1, False)
 
-        self._toolbar = gtk.Toolbar()
-        self._removeEffectBt = gtk.ToolButton("gtk-delete")
+        self._toolbar = Gtk.Toolbar()
+        self._removeEffectBt = Gtk.ToolButton.new_from_stock("gtk-delete")
         self._removeEffectBt.set_label(_("Remove effect"))
         self._removeEffectBt.set_use_underline(True)
         self._removeEffectBt.set_is_important(True)
         self._removeEffectBt.set_sensitive(False)
         self._toolbar.insert(self._removeEffectBt, 0)
-        self._table.attach(self._toolbar, 0, 1, 0, 1, yoptions=gtk.FILL)
+        self._table.attach(self._toolbar, 0, 1, 0, 1, yoptions=Gtk.AttachOptions.FILL)
 
-        self.storemodel = gtk.ListStore(bool, str, str, str, object)
+        self.storemodel = Gtk.ListStore(bool, str, str, str, object)
 
         #Treeview
-        self.treeview_scrollwin = gtk.ScrolledWindow()
-        self.treeview_scrollwin.set_policy(gtk.POLICY_NEVER,
-                                           gtk.POLICY_AUTOMATIC)
-        self.treeview_scrollwin.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        self.treeview_scrollwin = Gtk.ScrolledWindow()
+        self.treeview_scrollwin.set_policy(Gtk.PolicyType.NEVER,
+                                           Gtk.PolicyType.AUTOMATIC)
+        self.treeview_scrollwin.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
 
         # TreeView
         # Displays name, description
-        self.treeview = gtk.TreeView(self.storemodel)
+        self.treeview = Gtk.TreeView(self.storemodel)
         self.treeview_scrollwin.add(self.treeview)
         self.treeview.set_property("rules_hint", True)
         self.treeview.set_property("has_tooltip", True)
         tsel = self.treeview.get_selection()
-        tsel.set_mode(gtk.SELECTION_SINGLE)
+        tsel.set_mode(Gtk.SelectionMode.SINGLE)
 
-        activatedcell = gtk.CellRendererToggle()
+        activatedcell = Gtk.CellRendererToggle()
         activatedcell.props.xpad = PADDING
         activatedcol = self.treeview.insert_column_with_attributes(-1,
                                                         _("Activated"),
@@ -208,31 +208,31 @@ class EffectProperties(gtk.Expander, gtk.HBox):
                                                         active=COL_ACTIVATED)
         activatedcell.connect("toggled", self._effectActiveToggleCb)
 
-        typecol = gtk.TreeViewColumn(_("Type"))
+        typecol = Gtk.TreeViewColumn(_("Type"))
         typecol.set_sort_column_id(COL_TYPE)
         self.treeview.append_column(typecol)
         typecol.set_spacing(SPACING)
-        typecol.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
+        typecol.set_sizing(Gtk.TreeViewColumnSizing.AUTOSIZE)
         typecol.set_min_width(50)
-        typecell = gtk.CellRendererText()
+        typecell = Gtk.CellRendererText()
         typecell.props.xpad = PADDING
-        typecell.set_property("ellipsize", pango.ELLIPSIZE_END)
-        typecol.pack_start(typecell)
+        typecell.set_property("ellipsize", Pango.EllipsizeMode.END)
+        typecol.pack_start(typecell, True)
         typecol.add_attribute(typecell, "text", COL_TYPE)
 
-        namecol = gtk.TreeViewColumn(_("Effect name"))
+        namecol = Gtk.TreeViewColumn(_("Effect name"))
         namecol.set_sort_column_id(COL_NAME_TEXT)
         self.treeview.append_column(namecol)
         namecol.set_spacing(SPACING)
-        namecell = gtk.CellRendererText()
+        namecell = Gtk.CellRendererText()
         namecell.props.xpad = PADDING
-        namecell.set_property("ellipsize", pango.ELLIPSIZE_END)
-        namecol.pack_start(namecell)
+        namecell.set_property("ellipsize", Pango.EllipsizeMode.END)
+        namecol.pack_start(namecell, True)
         namecol.add_attribute(namecell, "text", COL_NAME_TEXT)
 
-        self.treeview.drag_dest_set(gtk.DEST_DEFAULT_MOTION,
+        self.Gtk.drag_dest_set(treeview, Gtk.DestDefaults.MOTION,
             [EFFECT_TUPLE],
-            gtk.gdk.ACTION_COPY)
+            Gdk.DragAction.COPY)
 
         self.selection = self.treeview.get_selection()
 
@@ -298,13 +298,13 @@ class EffectProperties(gtk.Expander, gtk.HBox):
         self._updateAll()
 
     def  _trackObjectAddedCb(self, unused_timeline_object, track_object):
-        if isinstance(track_object, ges.TrackEffect):
+        if isinstance(track_object, GES.TrackEffect):
             selec = self.timeline.selection.getSelectedTrackEffects()
             self.selected_effects = selec
             self._updateAll()
 
     def  _trackRemovedRemovedCb(self, unused_timeline_object, track_object):
-        if isinstance(track_object, ges.TrackEffect):
+        if isinstance(track_object, GES.TrackEffect):
             selec = self.timeline.selection.getSelectedTrackEffects()
             self.selected_effects = selec
             self._updateAll()
@@ -342,13 +342,13 @@ class EffectProperties(gtk.Expander, gtk.HBox):
             # Which means, it has the corresponding media_type
             for tckobj in tlobj.get_track_objects():
                 track = tckobj.get_track()
-                if track.props.track_type == ges.TRACK_TYPE_AUDIO and \
+                if track.props.track_type == GES.TRACK_TYPE_AUDIO and \
                         media_type == AUDIO_EFFECT or \
-                        track.props.track_type == ges.TRACK_TYPE_VIDEO and \
+                        track.props.track_type == GES.TRACK_TYPE_VIDEO and \
                         media_type == VIDEO_EFFECT:
                     #Actually add the effect
                     self.app.action_log.begin("add effect")
-                    effect = ges.TrackParseLaunchEffect(bin_desc)
+                    effect = GES.TrackParseLaunchEffect(bin_desc)
                     tlobj.add_track_object(effect)
                     track.add_object(effect)
                     self._updateAll()
@@ -372,7 +372,7 @@ class EffectProperties(gtk.Expander, gtk.HBox):
         self.drag_unhighlight()
 
     def _dragMotionCb(self, unused, context, x, y, timestamp):
-        atom = gtk.gdk.atom_intern(EFFECT_TUPLE[0])
+        atom = Gdk.atom_intern(EFFECT_TUPLE[0])
         if not self._factory:
             self.drag_get_data(context, atom, timestamp)
         self.drag_highlight()
@@ -424,9 +424,9 @@ class EffectProperties(gtk.Expander, gtk.HBox):
                         track_effect.props.bin_description)
                 to_append = [track_effect.props.active]
                 track = track_effect.get_track()
-                if track.props.track_type == ges.TRACK_TYPE_AUDIO:
+                if track.props.track_type == GES.TRACK_TYPE_AUDIO:
                     to_append.append("Audio")
-                elif track.props.track_type == ges.TRACK_TYPE_VIDEO:
+                elif track.props.track_type == GES.TRACK_TYPE_VIDEO:
                     to_append.append("Video")
 
                 to_append.append(track_effect.props.bin_description)
@@ -473,7 +473,7 @@ class EffectProperties(gtk.Expander, gtk.HBox):
                                                COL_TRACK_EFFECT)
 
             for widget in self._vcontent.get_children():
-                if type(widget) in [gtk.ScrolledWindow, GstElementSettingsWidget]:
+                if type(widget) in [Gtk.ScrolledWindow, GstElementSettingsWidget]:
                     self._vcontent.remove(widget)
 
             element = track_effect
@@ -496,7 +496,7 @@ class EffectProperties(gtk.Expander, gtk.HBox):
             self._effect_config_ui = None
 
 
-class TransformationProperties(gtk.Expander):
+class TransformationProperties(Gtk.Expander):
     """
     Widget for viewing and configuring speed
     """
@@ -504,7 +504,7 @@ class TransformationProperties(gtk.Expander):
         'selection-changed': []}
 
     def __init__(self, app, action_log):
-        gtk.Expander.__init__(self)
+        Gtk.Expander.__init__(self)
         self.action_log = action_log
         self.app = app
         self._timeline = None
@@ -516,7 +516,7 @@ class TransformationProperties(gtk.Expander):
         self._seeker = Seeker()
 
         if not "Frei0r" in soft_deps:
-            self.builder = gtk.Builder()
+            self.builder = Gtk.Builder()
             self.builder.add_from_file(os.path.join(get_ui_dir(),
                         "cliptransformation.ui"))
 
@@ -607,7 +607,7 @@ class TransformationProperties(gtk.Expander):
 
     def _findEffect(self, name):
         for track_effect in self._current_tl_obj.get_track_objects():
-            if isinstance(track_effect, ges.TrackParseLaunchEffect):
+            if isinstance(track_effect, GES.TrackParseLaunchEffect):
                 if name in track_effect.get_property("bin-description"):
                         self.track_effect = track_effect
                         return track_effect.get_element()
@@ -615,7 +615,7 @@ class TransformationProperties(gtk.Expander):
     def _findOrCreateEffect(self, name):
         effect = self._findEffect(name)
         if not effect:
-            effect = ges.TrackParseLaunchEffect(name)
+            effect = GES.TrackParseLaunchEffect(name)
             self._current_tl_obj.add_track_object(effect)
             tracks = self.app.projectManager.current.timeline.get_tracks()
             for track in tracks:

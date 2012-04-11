@@ -20,12 +20,12 @@
 # Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-import goocanvas
-import ges
-import gobject
-import gtk
+from gi.repository import GooCanvas
+from gi.repository import GES
+from gi.repository import GObject
+from gi.repository import Gtk
 import os.path
-import pango
+from gi.repository import Pango
 import cairo
 
 import pitivi.configure as configure
@@ -49,12 +49,12 @@ from pitivi.utils.ui import LAYER_HEIGHT_EXPANDED,\
 
 #--------------------------------------------------------------#
 #                       Private stuff                          #
-LEFT_SIDE = gtk.gdk.Cursor(gtk.gdk.LEFT_SIDE)
-RIGHT_SIDE = gtk.gdk.Cursor(gtk.gdk.RIGHT_SIDE)
-ARROW = gtk.gdk.Cursor(gtk.gdk.ARROW)
-TRIMBAR_PIXBUF = gtk.gdk.pixbuf_new_from_file(
+LEFT_SIDE = Gdk.Cursor.new(Gdk.CursorType.LEFT_SIDE)
+RIGHT_SIDE = Gdk.Cursor.new(Gdk.CursorType.RIGHT_SIDE)
+ARROW = Gdk.Cursor.new(Gdk.CursorType.ARROW)
+TRIMBAR_PIXBUF = GdkPixbuf.Pixbuf.new_from_file(
     os.path.join(configure.get_pixmap_dir(), "trimbar-normal.png"))
-TRIMBAR_PIXBUF_FOCUS = gtk.gdk.pixbuf_new_from_file(
+TRIMBAR_PIXBUF_FOCUS = GdkPixbuf.Pixbuf.new_from_file(
     os.path.join(configure.get_pixmap_dir(), "trimbar-focused.png"))
 NAME_HOFFSET = 10
 NAME_VOFFSET = 5
@@ -114,7 +114,7 @@ GlobalSettings.addConfigOption('clipFontColor',
 
 def text_size(text):
     ink, logical = text.get_natural_extents()
-    x1, y1, x2, y2 = [pango.PIXELS(x) for x in logical]
+    x1, y1, x2, y2 = [Pango.PIXELS(x) for x in logical]
     return x2 - x1, y2 - y1
 
 
@@ -218,7 +218,7 @@ class TimelineController(Controller):
             self._context.setMode(self._getMode())
 
 
-class TrimHandle(View, goocanvas.Image, Loggable, Zoomable):
+class TrimHandle(View, GooCanvas.CanvasImage, Loggable, Zoomable):
 
     """A component of a TrackObject which manage's the source's edit
     points"""
@@ -229,10 +229,10 @@ class TrimHandle(View, goocanvas.Image, Loggable, Zoomable):
         self.app = instance
         self.element = element
         self.timeline = timeline
-        goocanvas.Image.__init__(self,
+        GooCanvas.CanvasImage.__init__(self,
             pixbuf=TRIMBAR_PIXBUF,
             line_width=0,
-            pointer_events=goocanvas.EVENTS_FILL,
+            pointer_events=GooCanvas.CanvasPointerEvents.FILL,
             **kwargs)
         View.__init__(self)
         Zoomable.__init__(self)
@@ -303,7 +303,7 @@ class EndHandle(TrimHandle):
             self._view.app.gui.viewer.clipTrimPreviewFinished()
 
 
-class TrackObject(View, goocanvas.Group, Zoomable):
+class TrackObject(View, GooCanvas.CanvasGroup, Zoomable):
 
     class Controller(TimelineController):
 
@@ -324,9 +324,9 @@ class TrackObject(View, goocanvas.Group, Zoomable):
         def click(self, pos):
             timeline = self._view.timeline
             element = self._view.element
-            if self._last_event.get_state() & gtk.gdk.SHIFT_MASK:
+            if self._last_event.get_state() & Gdk.ModifierType.SHIFT_MASK:
                 timeline.selection.setToObj(element, SELECT_BETWEEN)
-            elif self._last_event.get_state() & gtk.gdk.CONTROL_MASK:
+            elif self._last_event.get_state() & Gdk.ModifierType.CONTROL_MASK:
                 if element.selected:
                     mode = UNSELECT
                 else:
@@ -339,7 +339,7 @@ class TrackObject(View, goocanvas.Group, Zoomable):
                 timeline.selection.setToObj(element, SELECT)
 
     def __init__(self, instance, element, track, timeline, utrack, is_transition=False):
-        goocanvas.Group.__init__(self)
+        GooCanvas.CanvasGroup.__init__(self)
         View.__init__(self)
         Zoomable.__init__(self)
         self.ref = Zoomable.nsToPixel(10000000000)
@@ -354,16 +354,16 @@ class TrackObject(View, goocanvas.Group, Zoomable):
         self.snapped_before = False
         self.snapped_after = False
 
-        self.bg = goocanvas.Rect(
+        self.bg = GooCanvas.CanvasRect(
             height=self.height,
             line_width=1)
 
-        self.name = goocanvas.Text(
+        self.name = GooCanvas.CanvasText(
             x=NAME_HOFFSET + NAME_PADDING,
             y=NAME_VOFFSET + NAME_PADDING,
             operator=cairo.OPERATOR_ADD,
-            alignment=pango.ALIGN_LEFT)
-        self.namebg = goocanvas.Rect(
+            alignment=Pango.Alignment.LEFT)
+        self.namebg = GooCanvas.CanvasRect(
             radius_x=2,
             radius_y=2,
             x=NAME_HOFFSET,
@@ -375,18 +375,18 @@ class TrackObject(View, goocanvas.Group, Zoomable):
         self.end_handle = EndHandle(self.app, element, timeline,
             height=self.height)
 
-        self._selec_indic = goocanvas.Rect(
-            visibility=goocanvas.ITEM_INVISIBLE,
+        self._selec_indic = GooCanvas.CanvasRect(
+            visibility=GooCanvas.CanvasItemVisibility.INVISIBLE,
             line_width=0.0,
             height=self.height)
 
         if not self.is_transition:
             for thing in (self.bg, self._selec_indic,
                 self.start_handle, self.end_handle, self.namebg, self.name):
-                self.add_child(thing)
+                self.add_child(thing, 0)
         else:
             for thing in (self.bg, self.name):
-                self.add_child(thing)
+                self.add_child(thing, 0)
 
         self.element = element
         element.max_duration = element.props.duration
@@ -422,14 +422,14 @@ class TrackObject(View, goocanvas.Group, Zoomable):
         self._expanded = expanded
         if not self._expanded:
             self.height = LAYER_HEIGHT_COLLAPSED
-            self.content.props.visibility = goocanvas.ITEM_INVISIBLE
-            self.namebg.props.visibility = goocanvas.ITEM_INVISIBLE
+            self.content.props.visibility = GooCanvas.CanvasItemVisibility.INVISIBLE
+            self.namebg.props.visibility = GooCanvas.CanvasItemVisibility.INVISIBLE
             self.bg.props.height = LAYER_HEIGHT_COLLAPSED
             self.name.props.y = 0
         else:
             self.height = LAYER_HEIGHT_EXPANDED
-            self.content.props.visibility = goocanvas.ITEM_VISIBLE
-            self.namebg.props.visibility = goocanvas.ITEM_VISIBLE
+            self.content.props.visibility = GooCanvas.CanvasItemVisibility.VISIBLE
+            self.namebg.props.visibility = GooCanvas.CanvasItemVisibility.VISIBLE
             self.bg.props.height = LAYER_HEIGHT_EXPANDED
             self.height = LAYER_HEIGHT_EXPANDED
             self.name.props.y = NAME_VOFFSET + NAME_PADDING
@@ -442,15 +442,15 @@ class TrackObject(View, goocanvas.Group, Zoomable):
 ## Public API
 
     def focus(self):
-        self.start_handle.props.visibility = goocanvas.ITEM_VISIBLE
-        self.end_handle.props.visibility = goocanvas.ITEM_VISIBLE
+        self.start_handle.props.visibility = GooCanvas.CanvasItemVisibility.VISIBLE
+        self.end_handle.props.visibility = GooCanvas.CanvasItemVisibility.VISIBLE
         self.raise_(None)
         for transition in self.utrack.transitions:
             transition.raise_(None)
 
     def unfocus(self):
-        self.start_handle.props.visibility = goocanvas.ITEM_INVISIBLE
-        self.end_handle.props.visibility = goocanvas.ITEM_INVISIBLE
+        self.start_handle.props.visibility = GooCanvas.CanvasItemVisibility.INVISIBLE
+        self.end_handle.props.visibility = GooCanvas.CanvasItemVisibility.INVISIBLE
 
     def zoomChanged(self):
         self._update()
@@ -515,9 +515,9 @@ class TrackObject(View, goocanvas.Group, Zoomable):
 
     def selectedChangedCb(self, element, selected):
         if element.selected:
-            self._selec_indic.props.visibility = goocanvas.ITEM_VISIBLE
+            self._selec_indic.props.visibility = GooCanvas.CanvasItemVisibility.VISIBLE
         else:
-            self._selec_indic.props.visibility = goocanvas.ITEM_INVISIBLE
+            self._selec_indic.props.visibility = GooCanvas.CanvasItemVisibility.INVISIBLE
 
     def _update(self):
         try:
@@ -544,16 +544,16 @@ class TrackObject(View, goocanvas.Group, Zoomable):
                 self.namebg.props.height = self.nameheight + NAME_PADDING2X
                 self.namebg.props.width = min(w - NAME_HOFFSET,
                     self.namewidth + NAME_PADDING2X)
-                self.namebg.props.visibility = goocanvas.ITEM_VISIBLE
+                self.namebg.props.visibility = GooCanvas.CanvasItemVisibility.VISIBLE
             else:
-                self.namebg.props.visibility = goocanvas.ITEM_INVISIBLE
+                self.namebg.props.visibility = GooCanvas.CanvasItemVisibility.INVISIBLE
         self.app.gui.timeline_ui._canvas.regroupTracks()
         self.app.gui.timeline_ui.unsureVadjHeight()
 
 TRACK_CONTROL_WIDTH = 75
 
 
-class TrackControls(gtk.Label, Loggable):
+class TrackControls(Gtk.Label, Loggable):
     """Contains a timeline track name.
 
     @ivar track: The track for which to display the name.
@@ -563,7 +563,7 @@ class TrackControls(gtk.Label, Loggable):
     __gtype_name__ = 'TrackControls'
 
     def __init__(self, track):
-        gtk.Label.__init__(self)
+        Gtk.Label.__init__(self)
         Loggable.__init__(self)
         # Center the label horizontally.
         self.set_alignment(0.5, 0)
@@ -604,16 +604,16 @@ class TrackControls(gtk.Label, Loggable):
         return "<b>%s</b>" % track_name
 
 
-class Transition(goocanvas.Rect, Zoomable):
+class Transition(GooCanvas.CanvasRect, Zoomable):
 
     def __init__(self, transition):
-        goocanvas.Rect.__init__(self)
+        GooCanvas.CanvasRect.__init__(self)
         Zoomable.__init__(self)
         self.props.fill_color_rgba = 0xFFFFFF99
         self.props.stroke_color_rgba = 0x00000099
         self.set_simple_transform(0, - LAYER_SPACING + 3, 1.0, 0)
         self.props.height = LAYER_SPACING - 6
-        self.props.pointer_events = goocanvas.EVENTS_NONE
+        self.props.pointer_events = GooCanvas.CanvasPointerEvents.NONE
         self.props.radius_x = 2
         self.props.radius_y = 2
         self.transition = transition
@@ -641,9 +641,9 @@ class Transition(goocanvas.Rect, Zoomable):
     def _updateDuration(self, transition, duration):
         width = max(0, self.nsToPixel(duration))
         if width == 0:
-            self.props.visibility = goocanvas.ITEM_INVISIBLE
+            self.props.visibility = GooCanvas.CanvasItemVisibility.INVISIBLE
         else:
-            self.props.visibility = goocanvas.ITEM_VISIBLE
+            self.props.visibility = GooCanvas.CanvasItemVisibility.VISIBLE
         self.props.width = width
 
     @handler(transition, "notify::priority")
@@ -654,11 +654,11 @@ class Transition(goocanvas.Rect, Zoomable):
         self._updateAll()
 
 
-class Track(goocanvas.Group, Zoomable, Loggable):
+class Track(GooCanvas.CanvasGroup, Zoomable, Loggable):
     __gtype_name__ = 'Track'
 
     def __init__(self, instance, track, timeline=None):
-        goocanvas.Group.__init__(self)
+        GooCanvas.CanvasGroup.__init__(self)
         Zoomable.__init__(self)
         Loggable.__init__(self)
         self.app = instance
@@ -705,25 +705,25 @@ class Track(goocanvas.Group, Zoomable, Loggable):
 
     @handler(track, "track-object-added")
     def _objectAdded(self, unused_timeline, track_object):
-        if isinstance(track_object, ges.TrackTransition):
+        if isinstance(track_object, GES.TrackTransition):
             self._transitionAdded(track_object)
-        elif not isinstance(track_object, ges.TrackEffect):
+        elif not isinstance(track_object, GES.TrackEffect):
             #FIXME GES hack, waiting for the discoverer to do its job
             # so the duration properies are set properly
-            gobject.timeout_add(1, self.check, track_object)
+            GObject.timeout_add(1, self.check, track_object)
 
     def check(self, tr_obj):
         if tr_obj.get_timeline_object():
             w = TrackObject(self.app, tr_obj, self.track, self.timeline, self)
             self.widgets[tr_obj] = w
-            self.add_child(w)
+            self.add_child(w, 0)
             self.app.gui.setBestZoomRatio()
 
     @handler(track, "track-object-removed")
     def _objectRemoved(self, unused_timeline, track_object):
-        if isinstance(track_object, ges.TrackVideoTestSource) or \
-            isinstance(track_object, ges.TrackAudioTestSource) or \
-            isinstance(track_object, ges.TrackParseLaunchEffect):
+        if isinstance(track_object, GES.TrackVideoTestSource) or \
+            isinstance(track_object, GES.TrackAudioTestSource) or \
+            isinstance(track_object, GES.TrackParseLaunchEffect):
             return
         w = self.widgets[track_object]
         self.remove_child(w)
@@ -733,6 +733,6 @@ class Track(goocanvas.Group, Zoomable, Loggable):
     def _transitionAdded(self, transition):
         w = TrackObject(self.app, transition, self.track, self.timeline, self, True)
         self.widgets[transition] = w
-        self.add_child(w)
+        self.add_child(w, 0)
         self.transitions.append(w)
         w.raise_(None)

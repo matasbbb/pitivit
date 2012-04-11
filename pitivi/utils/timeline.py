@@ -20,9 +20,9 @@
 # Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-import ges
-import gtk
-import gst
+from gi.repository import GES
+from gi.repository import Gtk
+from gi.repository import Gst
 
 from pitivi.utils.misc import infinity
 from pitivi.utils.loggable import Loggable
@@ -65,7 +65,7 @@ def previous_track_source(focus, layer, start):
                 tckobj.get_timeline_object().get_layer() == layer and \
                 (tckstart + tckduration < start or\
                 (tckstart < start < tckstart + tckduration)) and \
-                isinstance(tckobj, ges.TrackSource):
+                isinstance(tckobj, GES.TrackSource):
             return tckobj
     return None
 
@@ -84,7 +84,7 @@ def next_track_source(focus, layer, start, duration):
         if tckobj != focus and \
                 tckobj.get_timeline_object().get_layer() == layer and \
                 (end < tckstart or (tckstart < end < tckstart + tckduration)) \
-                and isinstance(tckobj, ges.TrackSource):
+                and isinstance(tckobj, GES.TrackSource):
             return tckobj
     return None
 
@@ -111,7 +111,7 @@ class Gap(object):
 
         try:
             prev = [obj for obj in tlobjs[:index - 1]\
-                    if isinstance(obj, ges.TimelineSource) and \
+                    if isinstance(obj, GES.TimelineSource) and \
                     obj != timeline_object].pop()
             left_object = prev
             right_object = timeline_object
@@ -127,7 +127,7 @@ class Gap(object):
 
         try:
             next = [obj for obj in tlobjs[index + 1:]\
-                   if isinstance(obj, ges.TimelineSource) and \
+                   if isinstance(obj, GES.TimelineSource) and \
                     obj != timeline_object][0]
 
             left_object = timeline_object
@@ -222,12 +222,12 @@ class SmallestGapsFinder(object):
 
 class Selection(Signallable):
     """
-    A collection of L{ges.TimelineObject}.
+    A collection of L{GES.TimelineObject}.
 
     Signals:
-     - C{selection-changed} : The contents of the L{ges.Selection} changed.
+     - C{selection-changed} : The contents of the L{GES.Selection} changed.
 
-    @ivar selected: Set of selected L{ges.TrackObject}
+    @ivar selected: Set of selected L{GES.TrackObject}
     @type selected: C{list}
     """
 
@@ -240,7 +240,7 @@ class Selection(Signallable):
 
     def setToObj(self, obj, mode):
         """
-        Convenience method for calling L{setSelection} with a single L{ges.TimelineObject}
+        Convenience method for calling L{setSelection} with a single L{GES.TimelineObject}
 
         @see: L{setSelection}
         """
@@ -251,7 +251,7 @@ class Selection(Signallable):
         Add the given timeline_object to the selection.
 
         @param timeline_object: The object to add
-        @type timeline_object: L{ges.TimelineObject}
+        @type timeline_object: L{GES.TimelineObject}
         @raises TimelineError: If the object is already controlled by this
         Selection.
         """
@@ -276,7 +276,7 @@ class Selection(Signallable):
         selection = set()
         for obj in objs:
             # FIXME GES break, handle the fact that we have unlinked objects in GES
-            if isinstance(obj, ges.TrackObject):
+            if isinstance(obj, GES.TrackObject):
                 selection.add(obj.get_timeline_object())
             else:
                 selection.add(obj)
@@ -293,12 +293,12 @@ class Selection(Signallable):
 
         for obj in self.selected - old_selection:
             for tckobj in obj.get_track_objects():
-                if not isinstance(tckobj, ges.TrackEffect):
+                if not isinstance(tckobj, GES.TrackEffect):
                     tckobj.selected.selected = True
 
         for obj in old_selection - self.selected:
             for tckobj in obj.get_track_objects():
-                if not isinstance(tckobj, ges.TrackEffect):
+                if not isinstance(tckobj, GES.TrackEffect):
                     tckobj.selected.selected = False
 
         # FIXME : shouldn't we ONLY emit this IFF the selection has changed ?
@@ -321,7 +321,7 @@ class Selection(Signallable):
         track_effects = []
         for timeline_object in self.selected:
             for track in timeline_object.get_track_objects():
-                if isinstance(track, ges.TrackEffect):
+                if isinstance(track, GES.TrackEffect):
                     track_effects.append(track)
 
         return track_effects
@@ -350,13 +350,13 @@ class EditingContext(object):
     def __init__(self, timeline, focus, other):
         """
         @param timeline: the timeline to edit
-        @type timeline: instance of L{ges.Timeline}
+        @type timeline: instance of L{GES.Timeline}
 
         @param focus: the TimelineObject or TrackObject which is to be the
         main target of interactive editing, such as the object directly under the
         mouse pointer
-        @type focus: L{ges.TimelineObject} or
-        L{ges.TrackObject}
+        @type focus: L{GES.TimelineObject} or
+        L{GES.TrackObject}
 
         @param other: a set of objects which are the secondary targets of
         interactive editing, such as objects in the current selection.
@@ -512,7 +512,7 @@ class MoveContext(EditingContext, Loggable):
         all_objects.add(focus)
 
         for obj in all_objects:
-            if isinstance(obj, ges.TrackObject):
+            if isinstance(obj, GES.TrackObject):
                 tlobj = obj.get_timeline_object()
                 tckobjs = [obj]
             else:
@@ -546,7 +546,7 @@ class MoveContext(EditingContext, Loggable):
 
         # Get focus various properties we need
         focus_start = focus.props.start
-        if isinstance(focus, ges.TrackObject):
+        if isinstance(focus, GES.TrackObject):
             layer = focus.get_timeline_object().get_layer()
         else:
             layer = focus.get_layer()
@@ -593,7 +593,7 @@ class MoveContext(EditingContext, Loggable):
 
     def finish(self):
 
-        if isinstance(self.focus, ges.TrackObject):
+        if isinstance(self.focus, GES.TrackObject):
             focus_timeline_object = self.focus.get_timeline_object()
         else:
             focus_timeline_object = self.focus
@@ -665,7 +665,7 @@ class MoveContext(EditingContext, Loggable):
 
             if prev:
                 prev_end = prev.get_start() + prev.get_duration()
-                if abs(start - prev_end) < gst.SECOND:
+                if abs(start - prev_end) < Gst.SECOND:
                     self.debug("Snaping to edge frontward, diff=%d",
                             abs(start - prev_end))
                     return prev_end
@@ -675,7 +675,7 @@ class MoveContext(EditingContext, Loggable):
                         tckobj.get_timeline_object().get_layer(), start,
                         end - start)
 
-                if next and abs(end - next.get_start()) < gst.SECOND:
+                if next and abs(end - next.get_start()) < Gst.SECOND:
                     self.debug("Snaping to edge backward, diff=%d",
                             abs(end - next.get_start()))
                     return next.get_start() - (end - start)
@@ -691,7 +691,7 @@ class MoveContext(EditingContext, Loggable):
         layers = self.timeline.get_layers()
 
         if not layers:
-            layer = ges.TimelineLayer()
+            layer = GES.TimelineLayer()
             layer.props.auto_transition = True
             self.timeline.add_layer(layer)
             layers = [layer]
@@ -710,13 +710,13 @@ class MoveContext(EditingContext, Loggable):
 
         # We make sure to work with TimelineObject-s for the drag
         # and drop
-        if isinstance(self.focus, ges.TrackSource):
+        if isinstance(self.focus, GES.TrackSource):
             obj = self.focus.get_timeline_object()
         else:
             obj = self.focus
 
         # FIXME See what we should do in the case we have
-        # have ges.xxxOperation
+        # have GES.xxxOperation
 
         self.focus.props.start = long(position)
 
@@ -729,7 +729,7 @@ class MoveContext(EditingContext, Loggable):
             if obj.get_layer().props.priority != priority:
                 if  priority == len(layers):
                     self.debug("Adding layer")
-                    layer = ges.TimelineLayer()
+                    layer = GES.TimelineLayer()
                     layer.props.auto_transition = True
                     layer.props.priority = priority
                     self.timeline.add_layer(layer)
@@ -793,7 +793,7 @@ class TrimStartContext(EditingContext, Signallable):
         EditingContext.__init__(self, timeline, focus, other)
         self.tracks = set([])
 
-        if isinstance(self.focus, ges.TrackObject):
+        if isinstance(self.focus, GES.TrackObject):
             focus_timeline_object = self.focus.get_timeline_object()
             self.tracks.add(focus.get_track())
         else:
@@ -852,7 +852,7 @@ class TrimStartContext(EditingContext, Signallable):
         return position, priority
 
     def finish(self):
-        if isinstance(self.focus, ges.TrackObject):
+        if isinstance(self.focus, GES.TrackObject):
             obj = self.focus.get_timeline_object()
         else:
             obj = self.focus
@@ -883,7 +883,7 @@ class TrimEndContext(EditingContext, Signallable):
     def __init__(self, timeline, focus, other):
         EditingContext.__init__(self, timeline, focus, other)
         self.tracks = set([])
-        if isinstance(self.focus, ges.TrackSource):
+        if isinstance(self.focus, GES.TrackSource):
             focus_timeline_object = self.focus
             self.tracks.add(focus.get_track())
         else:
@@ -894,7 +894,7 @@ class TrimEndContext(EditingContext, Signallable):
         self.focus_timeline_object = focus_timeline_object
         self.default_originals = self._saveValues([focus_timeline_object])
 
-        if isinstance(focus, ges.TrackObject):
+        if isinstance(focus, GES.TrackObject):
             layer = focus.get_timeline_object().get_layer()
         else:
             layer = focus.get_layer()
@@ -944,7 +944,7 @@ class TrimEndContext(EditingContext, Signallable):
     def finish(self):
         EditingContext.finish(self)
 
-        if isinstance(self.focus, ges.TrackObject):
+        if isinstance(self.focus, GES.TrackObject):
             obj = self.focus.get_timeline_object()
         else:
             obj = self.focus
@@ -968,7 +968,7 @@ class TrimEndContext(EditingContext, Signallable):
 
 #-------------------------- Interfaces ----------------------------------------#
 
-ARROW = gtk.gdk.Cursor(gtk.gdk.ARROW)
+ARROW = Gdk.Cursor.new(Gdk.CursorType.ARROW)
 
 
 class Controller(Loggable):
@@ -1085,9 +1085,9 @@ class Controller(Loggable):
     def key_press_event(self, item, target, event):
         self._event_common(item, target, event)
         kv = event.keyval
-        if kv in (gtk.keysyms.Shift_L, gtk.keysyms.Shift_R):
+        if kv in (Gdk.KEY_Shift_L, Gdk.KEY_Shift_R):
             self._shift_down = True
-        elif kv in (gtk.keysyms.Control_L, gtk.keysyms.Control_R):
+        elif kv in (Gdk.KEY_Control_L, Gdk.KEY_Control_R):
             self._control_down = True
         return self.key_press(kv)
 
@@ -1095,9 +1095,9 @@ class Controller(Loggable):
     def key_release_event(self, item, target, event):
         self._event_common(item, target, event)
         kv = event.keyval
-        if kv in (gtk.keysyms.Shift_L, gtk.keysyms.Shift_R):
+        if kv in (Gdk.KEY_Shift_L, Gdk.KEY_Shift_R):
             self._shift_down = False
-        elif kv in (gtk.keysyms.Control_L, gtk.keysyms.Control_R):
+        elif kv in (Gdk.KEY_Control_L, Gdk.KEY_Control_R):
             self._control_down = False
         return self.key_release(kv)
 
@@ -1111,8 +1111,8 @@ class Controller(Loggable):
             self._vadj = self._canvas.app.gui.timeline_ui.vadj
         self._last_event = event
         s = event.get_state()
-        self._shift_down = s & gtk.gdk.SHIFT_MASK
-        self._control_down = s & gtk.gdk.CONTROL_MASK
+        self._shift_down = s & Gdk.ModifierType.SHIFT_MASK
+        self._control_down = s & Gdk.ModifierType.CONTROL_MASK
 
     def _drag_start(self, item, target, event):
         self.drag_start(item, target, event)
@@ -1294,14 +1294,14 @@ class Zoomable(object):
         """
         Returns the pixel equivalent in nanoseconds according to the zoomratio
         """
-        return long(pixel * gst.SECOND / cls.zoomratio)
+        return long(pixel * Gst.SECOND / cls.zoomratio)
 
     @classmethod
     def pixelToNsAt(cls, pixel, ratio):
         """
         Returns the pixel equivalent in nanoseconds according to the zoomratio
         """
-        return long(pixel * gst.SECOND / ratio)
+        return long(pixel * Gst.SECOND / ratio)
 
     @classmethod
     def nsToPixel(cls, duration):
@@ -1311,9 +1311,9 @@ class Zoomable(object):
         """
         ## DIE YOU CUNTMUNCH CLOCK_TIME_NONE UBER STUPIDITY OF CRACK BINDINGS !!!!!!
         if duration == 18446744073709551615 or \
-               long(duration) == long(gst.CLOCK_TIME_NONE):
+               long(duration) == long(Gst.CLOCK_TIME_NONE):
             return 0
-        return int((float(duration) / gst.SECOND) * cls.zoomratio)
+        return int((float(duration) / Gst.SECOND) * cls.zoomratio)
 
     @classmethod
     def _zoomChanged(cls):

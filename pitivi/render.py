@@ -25,11 +25,11 @@ Rendering-related utilities and classes
 """
 
 import os
-import gtk
-import gst
-import ges
+from gi.repository import Gtk
+from gi.repository import Gst
+from gi.repository import GES
 import time
-import gst
+from gi.repository import Gst
 
 import pitivi.utils.loggable as log
 
@@ -52,13 +52,13 @@ def get_compatible_sink_pad(factoryname, caps):
     Returns the pad name of a (request) pad from factoryname which is
     compatible with the given caps.
     """
-    factory = gst.registry_get_default().lookup_feature(factoryname)
+    factory = Gst.Registry.get().lookup_feature(factoryname)
     if factory == None:
         log.warning("render", "%s is not a valid factoryname", factoryname)
         return None
 
     res = []
-    sinkpads = [x for x in factory.get_static_pad_templates() if x.direction == gst.PAD_SINK]
+    sinkpads = [x for x in factory.get_static_pad_templates() if x.direction == Gst.PadDirection.SINK]
     for p in sinkpads:
         c = p.get_caps()
         log.log("render", "sinkcaps %s", c.to_string())
@@ -77,13 +77,13 @@ def get_compatible_sink_caps(factoryname, caps):
     Returns the compatible caps between 'caps' and the sink pad caps of 'factoryname'
     """
     log.log("render", "factoryname : %s , caps : %s", factoryname, caps.to_string())
-    factory = gst.registry_get_default().lookup_feature(factoryname)
+    factory = Gst.Registry.get().lookup_feature(factoryname)
     if factory == None:
         log.warning("render", "%s is not a valid factoryname", factoryname)
         return None
 
     res = []
-    sinkcaps = [x.get_caps() for x in factory.get_static_pad_templates() if x.direction == gst.PAD_SINK]
+    sinkcaps = [x.get_caps() for x in factory.get_static_pad_templates() if x.direction == Gst.PadDirection.SINK]
     for c in sinkcaps:
         log.log("render", "sinkcaps %s", c.to_string())
         inter = caps.intersect(c)
@@ -115,12 +115,12 @@ def my_can_sink_caps(muxer, ocaps, muxsinkcaps=[]):
         return False
     # slower default
     for x in muxer.get_static_pad_templates():
-        if x.direction == gst.PAD_SINK:
+        if x.direction == Gst.PadDirection.SINK:
             if not x.get_caps().intersect(ocaps).is_empty():
                 return True
     return False
 
-    # sinkcaps = (x.get_caps() for x in muxer.get_static_pad_templates() if x.direction == gst.PAD_SINK)
+    # sinkcaps = (x.get_caps() for x in muxer.get_static_pad_templates() if x.direction == Gst.PadDirection.SINK)
     # for x in sinkcaps:
     #     if not x.intersect(ocaps).is_empty():
     #         return True
@@ -130,7 +130,7 @@ def my_can_sink_caps(muxer, ocaps, muxsinkcaps=[]):
 class CachedEncoderList(object):
     def __init__(self):
         self._factories = None
-        self._registry = gst.registry_get_default()
+        self._registry = Gst.Registry.get()
         self._registry.connect("feature-added", self._registryFeatureAddedCb)
 
     def _ensure_factories(self):
@@ -138,12 +138,12 @@ class CachedEncoderList(object):
             self._buildFactories()
 
     def _buildFactories(self):
-        self._factories = self._registry.get_feature_list(gst.ElementFactory)
+        self._factories = self._registry.get_feature_list(Gst.ElementFactory)
         self._audioEncoders = []
         self._videoEncoders = []
         self._muxers = []
         for fact in self._factories:
-            klist = fact.get_klass().split('/')
+            klist = fact.get_metadata('klass').split('/')
             if list_compat(("Codec", "Muxer"), klist):
                 self._muxers.append(fact)
             elif list_compat(("Codec", "Encoder", "Video"), klist) or list_compat(("Codec", "Encoder", "Image"), klist):
@@ -201,18 +201,18 @@ def encoders_muxer_compatible(encoders, muxer, muxsinkcaps=[]):
     """ returns the list of encoders compatible with the given muxer """
     res = []
     if muxsinkcaps == []:
-        muxsinkcaps = [x.get_caps() for x in muxer.get_static_pad_templates() if x.direction == gst.PAD_SINK]
+        muxsinkcaps = [x.get_caps() for x in muxer.get_static_pad_templates() if x.direction == Gst.PadDirection.SINK]
     for encoder in encoders:
         for tpl in encoder.get_static_pad_templates():
-            if tpl.direction == gst.PAD_SRC:
+            if tpl.direction == Gst.PadDirection.SRC:
                 if my_can_sink_caps(muxer, tpl.get_caps(), muxsinkcaps):
                     res.append(encoder)
                     break
     return res
 
 
-raw_audio_caps = gst.Caps("audio/x-raw-float;audio/x-raw-int")
-raw_video_caps = gst.Caps("video/x-raw-yuv;video/x-raw-rgb")
+raw_audio_caps = Gst.caps_from_string("audio/x-raw-float;audio/x-raw-int")
+raw_video_caps = Gst.caps_from_string("video/x-raw-yuv;video/x-raw-rgb")
 
 
 def muxer_can_sink_raw_audio(muxer):
@@ -255,7 +255,7 @@ def available_combinations():
 
 def beautify_factoryname(factory):
     """
-    Returns a nice name for the specified gst.ElementFactory instance.
+    Returns a nice name for the specified Gst.ElementFactory instance.
     This is intended to remove redundant words and shorten the codec names.
     """
     # only replace lowercase versions of "format", "video", "audio"
@@ -265,7 +265,7 @@ def beautify_factoryname(factory):
             "Flash Video (FLV) /",  # Incorrect naming for Sorenson Spark
             ]
     words_to_replace = [["version ", "v"], ["Microsoft", "MS"], ]
-    name = factory.get_longname()
+    name = factory.get_metadata('long-name')
     for word in words_to_remove:
         name = name.replace(word, "")
     for match, replacement in words_to_replace:
@@ -307,10 +307,10 @@ def extension_for_muxer(muxer):
 
 
 def factorylist(factories):
-    """Create a gtk.ListStore() of sorted, beautified factory names.
+    """Create a Gtk.ListStore() of sorted, beautified factory names.
 
     @param factories: The factories available for creating the list.
-    @type factories: A sequence of gst.ElementFactory instances.
+    @type factories: A sequence of Gst.ElementFactory instances.
     """
     columns = (str, object)
     data = [(beautify_factoryname(factory), factory)
@@ -330,7 +330,7 @@ class RenderingProgressDialog(Signallable):
     def __init__(self, app, parent):
         self.app = app
         self.system = app.system
-        self.builder = gtk.Builder()
+        self.builder = Gtk.Builder()
         self.builder.add_from_file(os.path.join(configure.get_ui_dir(),
             "renderingprogress.ui"))
         self.builder.connect_signals(self)
@@ -357,8 +357,8 @@ class RenderingProgressDialog(Signallable):
             self.progressbar.set_text(_("About %s left") % estimated)
 
     def setState(self, state):
-        if state == gst.STATE_PLAYING:
-            self.play_pause_button.props.label = gtk.STOCK_MEDIA_PAUSE
+        if state == Gst.State.PLAYING:
+            self.play_pause_button.props.label = Gtk.STOCK_MEDIA_PAUSE
             self.system.inhibitSleep(RenderDialog.INHIBIT_REASON)
         else:
             self.play_pause_button.props.label = 'pitivi-render'
@@ -406,7 +406,7 @@ class RenderDialog(Loggable):
         # {object: sigId}
         self._gstSigId = {}
 
-        self.builder = gtk.Builder()
+        self.builder = Gtk.Builder()
         self.builder.add_from_file(os.path.join(configure.get_ui_dir(),
             "renderingdialog.ui"))
         self._setProperties()
@@ -498,8 +498,8 @@ class RenderDialog(Loggable):
             "acodec": get_combo_value(self.audio_encoder_combo).get_name(),
             "vcodec": get_combo_value(self.video_encoder_combo).get_name(),
             "container": get_combo_value(self.muxercombobox).get_name(),
-            "frame-rate": gst.Fraction(int(get_combo_value(self.frame_rate_combo).num),
-                                        int(get_combo_value(self.frame_rate_combo).denom)),
+            "frame-rate": Fraction(int(get_combo_value(self.frame_rate_combo).numerator),
+                                        int(get_combo_value(self.frame_rate_combo).denominator)),
             "height": self.getDimension("height"),
             "width": self.getDimension("width")})
 
@@ -540,7 +540,7 @@ class RenderDialog(Loggable):
                 lambda: get_combo_value(widget))
 
     def muxer_setter(self, widget, value):
-        set_combo_value(widget, gst.element_factory_find(value))
+        set_combo_value(widget, Gst.ElementFactory.find(value))
         self.settings.setEncoders(muxer=value)
 
         # Update the extension of the filename.
@@ -555,14 +555,14 @@ class RenderDialog(Loggable):
             self.muxer_combo_changing = False
 
     def acodec_setter(self, widget, value):
-        set_combo_value(widget, gst.element_factory_find(value))
+        set_combo_value(widget, Gst.ElementFactory.find(value))
         self.settings.setEncoders(aencoder=value)
         if not self.muxer_combo_changing:
             # The user directly changed the audio encoder combo.
             self.preferred_aencoder = value
 
     def vcodec_setter(self, widget, value):
-        set_combo_value(widget, gst.element_factory_find(value))
+        set_combo_value(widget, Gst.ElementFactory.find(value))
         self.settings.setEncoders(vencoder=value)
         if not self.muxer_combo_changing:
             # The user directly changed the video encoder combo.
@@ -612,9 +612,9 @@ class RenderDialog(Loggable):
         removing and saving a preset, enabling or disabling them accordingly.
         @type update_buttons_func: function
         """
-        renderer = gtk.CellRendererText()
+        renderer = Gtk.CellRendererText()
         renderer.props.editable = True
-        column = gtk.TreeViewColumn("Preset", renderer, text=0)
+        column = Gtk.TreeViewColumn("Preset", renderer, text=0)
         treeview.append_column(column)
         treeview.props.headers_visible = False
         model = mgr.getModel()
@@ -697,8 +697,8 @@ class RenderDialog(Loggable):
             "acodec": get_combo_value(self.audio_encoder_combo).get_name(),
             "vcodec": get_combo_value(self.video_encoder_combo).get_name(),
             "container": get_combo_value(self.muxercombobox).get_name(),
-            "frame-rate": gst.Fraction(int(get_combo_value(self.frame_rate_combo).num),
-                                        int(get_combo_value(self.frame_rate_combo).denom)),
+            "frame-rate": Fraction(int(get_combo_value(self.frame_rate_combo).numerator),
+                                        int(get_combo_value(self.frame_rate_combo).denominator)),
             "height": 0,
             "width": 0})
 
@@ -790,7 +790,7 @@ class RenderDialog(Loggable):
         # Muxer settings
         # note: this will trigger an update of the codec comboboxes
         set_combo_value(self.muxercombobox,
-            gst.element_factory_find(self.settings.muxer))
+            Gst.ElementFactory.find(self.settings.muxer))
 
     def _checkForExistingFile(self, *args):
         """
@@ -800,7 +800,7 @@ class RenderDialog(Loggable):
         if not path:
             # This happens when the window is initialized.
             return
-        warning_icon = gtk.STOCK_DIALOG_WARNING
+        warning_icon = Gtk.STOCK_DIALOG_WARNING
         filename = self.fileentry.get_text()
         if not filename:
             tooltip_text = _("A file name is required.")
@@ -843,7 +843,7 @@ class RenderDialog(Loggable):
         if preferred_encoder:
             # A preference exists, pick it if it can be found in
             # the current model of the combobox.
-            vencoder = gst.element_factory_find(preferred_encoder)
+            vencoder = Gst.ElementFactory.find(preferred_encoder)
             set_combo_value(encoder_combo, vencoder, default_index=0)
         else:
             # No preference exists, pick the first encoder from
@@ -854,7 +854,7 @@ class RenderDialog(Loggable):
         """Open a dialog to edit the properties for the specified factory.
 
         @param factory: An element factory whose properties the user will edit.
-        @type factory: gst.ElementFactory
+        @type factory: Gst.ElementFactory
         @param settings_attr: The MultimediaSettings attribute holding
         the properties.
         @type settings_attr: str
@@ -867,12 +867,12 @@ class RenderDialog(Loggable):
 
     def startAction(self):
         """ Start the render process """
-        self._pipeline.set_state(gst.STATE_NULL)
-        self._pipeline.set_mode(ges.TIMELINE_MODE_SMART_RENDER)
+        self._pipeline.set_state(Gst.State.NULL)
+        self._pipeline.set_mode(GES.TIMELINE_MODE_SMART_RENDER)
         encodebin = self._pipeline.get_by_name("internal-encodebin")
         self._gstSigId[encodebin] = encodebin.connect("element-added", self._elementAddedCb)
         self.timestarted = time.time()
-        self._pipeline.set_state(gst.STATE_PLAYING)
+        self._pipeline.set_state(Gst.State.PLAYING)
 
     def _cancelRender(self, progress):
         self.debug("aborting render")
@@ -882,9 +882,9 @@ class RenderDialog(Loggable):
     def _shutDown(self):
         """ The render process has been aborted, shutdown the gstreamer pipeline
         and disconnect from its signals """
-        self._pipeline.set_state(gst.STATE_NULL)
+        self._pipeline.set_state(Gst.State.NULL)
         self._disconnectFromGst()
-        self._pipeline.set_mode(ges.TIMELINE_MODE_PREVIEW)
+        self._pipeline.set_mode(GES.TIMELINE_MODE_PREVIEW)
 
     def _pauseRender(self, progress):
         togglePlayback(self._pipeline)
@@ -947,17 +947,17 @@ class RenderDialog(Loggable):
         self.window.hide()  # Hide the rendering settings dialog while rendering
 
         # FIXME GES: Handle presets here!
-        self.containerprofile = gst.pbutils.EncodingContainerProfile(None, None,
-                                    gst.Caps(self.muxertype), None)
+        self.containerprofile = GstPbutils.EncodingContainerProfile(None, None,
+                                    Gst.caps_from_string(self.muxertype), None)
 
         if self.video_output_checkbutton.get_active():
-            self.videoprofile = gst.pbutils.EncodingVideoProfile(
-                                    gst.Caps(self.videotype), None,
+            self.videoprofile = GstPbutils.EncodingVideoProfile(
+                                    Gst.caps_from_string(self.videotype), None,
                                     self.settings.getVideoCaps(True), 0)
             self.containerprofile.add_profile(self.videoprofile)
         if self.audio_output_checkbutton.get_active():
-            self.audioprofile = gst.pbutils.EncodingAudioProfile(
-                                    gst.Caps(self.audiotype), None,
+            self.audioprofile = GstPbutils.EncodingAudioProfile(
+                                    Gst.caps_from_string(self.audiotype), None,
                                     self.settings.getAudioCaps(), 0)
             self.containerprofile.add_profile(self.audioprofile)
 
@@ -981,11 +981,11 @@ class RenderDialog(Loggable):
 
     #-- GStreamer callbacks
     def _busMessageCb(self, unused_bus, message):
-        if message.type == gst.MESSAGE_EOS:  # Render complete
+        if message.type == Gst.MessageType.EOS:  # Render complete
             self.debug("got EOS message, render complete")
             self._shutDown()
             self._destroyProgressWindow()
-        elif message.type == gst.MESSAGE_STATE_CHANGED and self.progress:
+        elif message.type == Gst.MessageType.STATE_CHANGED and self.progress:
             prev, state, pending = message.parse_state_changed()
             self.progress.setState(state)
 
@@ -999,12 +999,12 @@ class RenderDialog(Loggable):
                 # only display ETA after 5s in order to have enough averaging and
                 # if the position is non-null
                 totaltime = (timediff * float(length) / float(position)) - timediff
-                text = beautify_ETA(int(totaltime * gst.SECOND))
+                text = beautify_ETA(int(totaltime * Gst.SECOND))
             self.progress.updatePosition(fraction, text)
 
     def _elementAddedCb(self, bin, element):
-        # Setting properties on gst.Element-s has they are added to the
-        # gst.Encodebin
+        # Setting properties on Gst.Element-s has they are added to the
+        # Gst.Encodebin
         if element.get_factory() == get_combo_value(self.video_encoder_combo):
             for setting in self.settings.vcodecsettings:
                 element.set_property(setting, self.settings.vcodecsettings[setting])
@@ -1079,7 +1079,7 @@ class RenderDialog(Loggable):
 
     def _videoEncoderComboChangedCb(self, combo):
         vencoder = get_combo_value(combo).get_name()
-        for template in gst.registry_get_default().lookup_feature(vencoder).get_static_pad_templates():
+        for template in Gst.Registry.get().lookup_feature(vencoder).get_static_pad_templates():
             if template.name_template == "src":
                 self.videotype = template.get_caps().to_string()
                 for elem in self.videotype.split(","):
@@ -1107,7 +1107,7 @@ class RenderDialog(Loggable):
     def _audioEncoderChangedComboCb(self, combo):
         aencoder = get_combo_value(combo).get_name()
         self.settings.setEncoders(aencoder=aencoder)
-        for template in gst.registry_get_default().lookup_feature(aencoder).get_static_pad_templates():
+        for template in Gst.Registry.get().lookup_feature(aencoder).get_static_pad_templates():
             if template.name_template == "src":
                 self.audiotype = template.get_caps().to_string()
                 for elem in self.audiotype.split(","):
@@ -1125,7 +1125,7 @@ class RenderDialog(Loggable):
     def _muxerComboChangedCb(self, muxer_combo):
         """Handle the changing of the container format combobox."""
         muxer = get_combo_value(muxer_combo).get_name()
-        for template in gst.registry_get_default().lookup_feature(muxer).get_static_pad_templates():
+        for template in Gst.Registry.get().lookup_feature(muxer).get_static_pad_templates():
             if template.name_template == "src":
                 self.muxertype = template.get_caps().to_string()
         self.settings.setEncoders(muxer=muxer)

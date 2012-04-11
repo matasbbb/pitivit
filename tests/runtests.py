@@ -2,11 +2,11 @@ import os
 import sys
 import unittest
 
-import gobject
+from gi.repository import GObject
 # This call has to be made before any "import gst" call!
 # We have to do this call here, even though it already is in __init__.py,
 # because this tool is run directly, as an executable.
-gobject.threads_init()
+GObject.threads_init()
 
 
 def gettestnames(file_names):

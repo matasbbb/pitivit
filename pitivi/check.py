@@ -23,8 +23,8 @@
 Runtime checks.
 """
 
-import gtk
-import gst
+from gi.repository import Gtk
+from gi.repository import Gst
 
 from gettext import gettext as _
 
@@ -40,10 +40,10 @@ def initiate_videosinks():
     Test if the autovideosink element can initiate, return TRUE if it is the
     case.
     """
-    sink = gst.element_factory_make("autovideosink")
-    if not sink.set_state(gst.STATE_READY):
+    sink = Gst.ElementFactory.make("autovideosink", None)
+    if not sink.set_state(Gst.State.READY):
         return False
-    sink.set_state(gst.STATE_NULL)
+    sink.set_state(Gst.State.NULL)
     return True
 
 
@@ -52,10 +52,10 @@ def initiate_audiosinks():
     Test if the autoaudiosink element can initiate, return TRUE if it is the
     case.
     """
-    sink = gst.element_factory_make("autoaudiosink")
-    if not sink.set_state(gst.STATE_READY):
+    sink = Gst.ElementFactory.make("autoaudiosink", None)
+    if not sink.set_state(Gst.State.READY):
         return False
-    sink.set_state(gst.STATE_NULL)
+    sink.set_state(Gst.State.NULL)
     return True
 
 
@@ -87,30 +87,30 @@ def check_required_version(modulename):
     This function does not check for the existence of the given module !
     """
     if modulename == "pygtk":
-        if list(gtk.pygtk_version) < _string_to_list(PYGTK_REQ):
-            return [PYGTK_REQ, _version_to_string(gtk.pygtk_version)]
+        if list(Gtk.pygtk_version) < _string_to_list(PYGTK_REQ):
+            return [PYGTK_REQ, _version_to_string(Gtk.pygtk_version)]
     if modulename == "gtk":
-        if list(gtk.gtk_version) < _string_to_list(GTK_REQ):
-            return [GTK_REQ, _version_to_string(gtk.gtk_version)]
+        if list(Gtk.gtk_version) < _string_to_list(GTK_REQ):
+            return [GTK_REQ, _version_to_string(Gtk.gtk_version)]
     if modulename == "pygst":
-        if list(gst.get_pygst_version()) < _string_to_list(PYGST_REQ):
-            return [PYGST_REQ, _version_to_string(gst.get_pygst_version())]
+        if list(Gst.get_pygst_version()) < _string_to_list(PYGST_REQ):
+            return [PYGST_REQ, _version_to_string(Gst.get_pygst_version())]
     if modulename == "cairo":
         import cairo
         if _string_to_list(cairo.cairo_version_string()) < _string_to_list(PYCAIRO_REQ):
             return [PYCAIRO_REQ, cairo.cairo_version_string()]
     if modulename == "gst":
-        if list(gst.get_gst_version()) < _string_to_list(GST_REQ):
-            return [GST_REQ, _version_to_string(gst.get_gst_version())]
+        if list(Gst.get_gst_version()) < _string_to_list(GST_REQ):
+            return [GST_REQ, _version_to_string(Gst.get_gst_version())]
     if modulename == "gnonlin":
-        gnlver = gst.registry_get_default().find_plugin("gnonlin").get_version()
+        gnlver = Gst.Registry.get().find_plugin("gnonlin").get_version()
         if _string_to_list(gnlver) < _string_to_list(GNONLIN_REQ):
             return [GNONLIN_REQ, gnlver]
     return [None, None]
 
 
 def initial_checks():
-    reg = gst.registry_get_default()
+    reg = Gst.Registry.get()
     if PiTiVi:
         return (_("%s is already running") % APPNAME,
                 _("An instance of %s is already running in this script.") % APPNAME)
@@ -120,7 +120,7 @@ def initial_checks():
     if not reg.find_plugin("autodetect"):
         return (_("Could not find the autodetect plugins"),
                 _("Make sure you have installed gst-plugins-good and that it's available in the GStreamer plugin path."))
-    if not hasattr(gtk.gdk.Window, 'cairo_create'):
+    if not hasattr(Gdk.Window, 'cairo_create'):
         return (_("PyGTK doesn't have cairo support"),
                 _("Please use a version of the GTK+ Python bindings built with cairo support."))
     if not initiate_videosinks():
@@ -174,23 +174,23 @@ def initial_checks():
                 _("Make sure you have the distutils Python module installed."))
 
     # The following are soft dependencies
-    # Note that instead of checking for plugins using gst.registry_get_default().find_plugin("foo"),
-    # we could check for elements using gst.element_factory_make("foo")
+    # Note that instead of checking for plugins using Gst.Registry.get().find_plugin("foo"),
+    # we could check for elements using Gst.ElementFactory.make("foo", None)
     if not __try_import__("numpy"):
         soft_deps["NumPy"] = _("Enables the autoalign feature")
     try:
-        #if not gst.registry_get_default().find_plugin("frei0r"):
-        gst.element_factory_make("frei0r-filter-scale0tilt")
-    except gst.ElementNotFoundError:
+        #if not Gst.Registry.get().find_plugin("frei0r"):
+        Gst.ElementFactory.make("frei0r-filter-scale0tilt", None)
+    except Gst.ElementNotFoundError:
         soft_deps["Frei0r"] = _("Additional video effects")
-    if not gst.registry_get_default().find_plugin("ffmpeg"):
+    if not Gst.Registry.get().find_plugin("ffmpeg"):
         soft_deps["GStreamer FFmpeg plugin"] = _('Additional multimedia codecs through the FFmpeg library')
     # Test for gst bad
     # This is disabled because, by definition, gst bad is a set of plugins that can
     # move to gst good or ugly, and we don't really have something to rely upon.
-    #if not gst.registry_get_default().find_plugin("swfdec"): # FIXME: find a more representative plugin
+    #if not Gst.Registry.get().find_plugin("swfdec"): # FIXME: find a more representative plugin
     #    soft_deps["GStreamer bad plugins"] = _('Additional GStreamer plugins whose code is not of good enough quality, or are not considered tested well enough. The licensing may or may not be LGPL')
     # Test for gst ugly
-    #if not gst.registry_get_default().find_plugin("x264"):
+    #if not Gst.Registry.get().find_plugin("x264"):
     #    soft_deps["GStreamer ugly plugins"] = _('Additional good quality GStreamer plugins whose license is not LGPL or with licensing issues')
     return None

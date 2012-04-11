@@ -41,7 +41,6 @@ class Deploy():
         self.runPy2exeSetup()
         self.close()
 
-
     def close(self, message=None):
         if message is not None:
             print 'ERROR: %s' % message
@@ -53,7 +52,7 @@ class Deploy():
         self.curr_dir = os.getcwd()
         if not self.curr_dir.endswith('win32'):
             self.close("The script must be run from 'pitivi/win32'")
-        self.root_dir = os.path.abspath(os.path.join(self.curr_dir,'..'))
+        self.root_dir = os.path.abspath(os.path.join(self.curr_dir, '..'))
         self.dist_dir = os.path.join(self.root_dir, 'win32', 'dist')
         self.dist_bin_dir = os.path.join(self.dist_dir, 'bin')
         self.dist_etc_dir = os.path.join(self.dist_dir, 'etc')
@@ -69,12 +68,12 @@ class Deploy():
         sys.path.insert(0, os.path.join(self.curr_dir, 'site-packages'))
         # Add Gtk and GStreamer folder to the system path
         for folder in [self.gstPath, self.gtkPath]:
-            os.environ['PATH'] = os.environ['PATH']+';'+os.path.join(folder, 'bin')
+            os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(folder, 'bin')
         # FIXME: libgoocanvas links to libxml2.dll while the GStreamer installer
         # provides libxml2-2.dll
-        shutil.copy(os.path.join(self.gstPath, 'bin',  'libxml2-2.dll'),
+        shutil.copy(os.path.join(self.gstPath, 'bin', 'libxml2-2.dll'),
             os.path.join(self.dist_bin_dir, 'libxml2.dll'))
-        os.environ['PATH'] = os.environ['PATH']+';'+self.dist_bin_dir
+        os.environ['PATH'] = os.environ['PATH'] + ';' + self.dist_bin_dir
 
     def createDeploymentFolder(self):
         # Create a Unix-like diretory tree to deploy PiTiVi
@@ -82,8 +81,8 @@ class Deploy():
         if os.path.exists(self.dist_dir):
             try:
                 shutil.rmtree(self.dist_dir)
-            except :
-                self.close("ERROR: Can't delete folder %s"%self.dist_dir)
+            except:
+                self.close("ERROR: Can't delete folder %s" % self.dist_dir)
 
         for path in [self.dist_dir, self.dist_bin_dir, self.dist_etc_dir,
                 self.dist_share_dir, self.dist_lib_pitivi_dir,
@@ -93,9 +92,9 @@ class Deploy():
     def checkDependencies(self):
         print ('Checking dependencies')
         try:
-            import pygst
-            pygst.require('0.10')
-            import gst
+            import gi
+            gi.require_version('Gst', '1.0')
+            from gi.repository import Gst
         except ImportError:
             self.close('IMPORT_ERROR: Could not found the GStreamer Pythonbindings.\n'
                 'You can download the installers at:\n'
@@ -104,28 +103,28 @@ class Deploy():
             print ('GStreamer... OK')
 
         try:
-            import pygtk
-            pygtk.require('2.0')
-            import gtk
-            import gtk.gdk
-            import gobject
+            import gi
+            pyGtk.require('2.0')
+            from gi.repository import Gtk
+            import Gtk.gdk
+            from gi.repository import GObject
         except ImportError:
             self.close('IMPORT_ERROR: Could not find the Gtk Python bindings.\n'
                 'You can download the installers at:\n'
-                'http://www.pygtk.org/\n'
+                'http://www.pyGtk.org/\n'
                 'http://www.gtk.org/')
         else:
             print ('Gtk... OK')
 
         try:
-            import goocanvas
+            from gi.repository import GooCanvas
         except ImportError:
             self.close('IMPORT_ERROR: Could not find the Goocanvas Python bindings.\n'
                     'You can download the intallers at:\n'
                     'http://ftp.gnome.org/pub/GNOME/binaries/win32/goocanvas/\n'
-                    'http://sqlkit.argolinux.org/download/goocanvas.pyd')
+                    'http://sqlkit.argolinux.org/download/GooCanvas.pyd')
         else:
-            print ('goocanvas... OK')
+            print ('GooCanvas... OK')
 
         try:
             import zope.interface
@@ -133,7 +132,6 @@ class Deploy():
             self.close('ERROR: Could not found Zope.Interface')
         else:
             print ('zope.interface... OK')
-
 
     def deployPitivi(self):
         print('Deploying PiTiVi')
@@ -151,7 +149,7 @@ class Deploy():
         pitivi_pixmaps_dir = os.path.join(self.root_dir, 'pitivi', 'pixmaps')
         win32_pixmaps_dir = os.path.join(self.curr_dir, 'pixmaps')
         for name in os.listdir(pitivi_pixmaps_dir):
-            shutil.copy(os.path.join(pitivi_pixmaps_dir,name),
+            shutil.copy(os.path.join(pitivi_pixmaps_dir, name),
                     self.dist_share_pixmaps_dir)
         # Override SVG pixmaps with PNG pixmaps using the .svg extension
         # so they can be loaded if gdk doesn't support svg
@@ -181,27 +179,27 @@ class Deploy():
     def runPy2exeSetup(self):
         sys.argv.insert(1, 'py2exe')
         setup(
-            name = 'PiTiVi',
-            description = 'Non-Linear Video Editor',
-            version = '0.13.4',
+            name='PiTiVi',
+            description='Non-Linear Video Editor',
+            version='0.13.4',
 
-            windows = [
+            windows=[
                         {
                            'script': 'pitivi',
                            'icon_resources': [(1, "pitivi.ico")],
                         }
                     ],
 
-            options = {
+            options={
                         'py2exe': {
-                              'packages':'pitivi',
+                              'packages': 'pitivi',
                               'includes': 'gtk, cairo, pango, atk, pangocairo,\
                                       zope.interface, gobject, gst, email',
-                              'dist_dir' : self.dist_bin_dir
+                              'dist_dir': self.dist_bin_dir
                         }
                     },
 
-            zipfile = None,
+            zipfile=None,
         )
 
 
@@ -209,10 +207,10 @@ def main():
     usage = "usage: %prog [options]"
     parser = OptionParser(usage)
     parser.add_option("-g", "--gst-path", action="store",
-            dest="gstPath",default="c:\\gstreamer", type="string",
+            dest="gstPath", default="c:\\gstreamer", type="string",
             help="GStreamer installation path")
     parser.add_option("-k", "--gtk-path", action="store",
-            dest="gtkPath",default="c:\\gtk", type="string",
+            dest="gtkPath", default="c:\\gtk", type="string",
             help="GTK+ installation path")
 
     (options, args) = parser.parse_args()

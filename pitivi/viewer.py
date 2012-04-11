@@ -20,9 +20,9 @@
 # Boston, MA 02110-1301, USA.
 
 import platform
-import gobject
-import gtk
-import gst
+from gi.repository import GObject
+from gi.repository import Gtk
+from gi.repository import Gst
 import cairo
 
 from gettext import gettext as _
@@ -62,7 +62,7 @@ GlobalSettings.addConfigOption("pointColor", section="viewer",
     default='49a0e0')
 
 
-class PitiviViewer(gtk.VBox, Loggable):
+class PitiviViewer(Gtk.VBox, Loggable):
     """
     A Widget to control and visualize a Pipeline
 
@@ -73,14 +73,14 @@ class PitiviViewer(gtk.VBox, Loggable):
     """
     __gtype_name__ = 'PitiviViewer'
     __gsignals__ = {
-        "activate-playback-controls": (gobject.SIGNAL_RUN_LAST,
-            gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,)),
+        "activate-playback-controls": (GObject.SignalFlags.RUN_LAST,
+            None, (GObject.TYPE_BOOLEAN,)),
     }
 
     INHIBIT_REASON = _("Currently playing media")
 
     def __init__(self, app, undock_action=None, action=None, pipeline=None):
-        gtk.VBox.__init__(self)
+        Gtk.VBox.__init__(self)
         self.set_border_width(SPACING)
         self.app = app
         self.settings = app.settings
@@ -102,7 +102,7 @@ class PitiviViewer(gtk.VBox, Loggable):
         # Only used for restoring the pipeline position after a live clip trim preview:
         self._oldTimelinePos = None
 
-        self.currentState = gst.STATE_PAUSED
+        self.currentState = Gst.State.PAUSED
         self._haveUI = False
 
         self._createUi()
@@ -128,7 +128,7 @@ class PitiviViewer(gtk.VBox, Loggable):
         self.debug("self.pipeline:%r", self.pipeline)
 
         if self.pipeline:
-            self.pipeline.set_state(gst.STATE_NULL)
+            self.pipeline.set_state(Gst.State.NULL)
 
         self.pipeline = pipeline
         if self.pipeline:
@@ -138,14 +138,14 @@ class PitiviViewer(gtk.VBox, Loggable):
             # You can pass NULL to clear it.
             bus.set_sync_handler(None)
             bus.set_sync_handler(self._elementMessageCb)
-            self.pipeline.set_state(gst.STATE_PAUSED)
-            self.currentState = gst.STATE_PAUSED
+            self.pipeline.set_state(Gst.State.PAUSED)
+            self.currentState = Gst.State.PAUSED
             if position:
                 # Since the pipeline is async, the line below is a hack
                 # to force waiting indefinitely until the state has been changed
                 # before actually trying to seek.
                 self.pipeline.get_state(-1)
-                self.pipeline.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, position)
+                self.pipeline.seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH, position)
 
         self._setUiActive()
         self.seeker = self.app.projectManager.current.seeker
@@ -234,60 +234,60 @@ class PitiviViewer(gtk.VBox, Loggable):
         """ Creates the Viewer GUI """
         # Drawing area
         # The aspect ratio gets overridden on startup by setDisplayAspectRatio
-        self.aframe = gtk.AspectFrame(xalign=0.5, yalign=1.0, ratio=4.0 / 3.0,
+        self.aframe = Gtk.AspectFrame(xalign=0.5, yalign=1.0, ratio=4.0 / 3.0,
                                       obey_child=False)
 
         self.internal = ViewerWidget(self.app.settings)
         self.internal.init_transformation_events()
         self.internal.show()
         self.aframe.add(self.internal)
-        self.pack_start(self.aframe, expand=True)
+        self.pack_start(self.aframe, True, True, 0)
 
-        self.external_window = gtk.Window()
-        vbox = gtk.VBox()
+        self.external_window = Gtk.Window()
+        vbox = Gtk.VBox()
         vbox.set_spacing(SPACING)
         self.external_window.add(vbox)
         self.external = ViewerWidget(self.app.settings)
-        vbox.pack_start(self.external)
+        vbox.pack_start(self.external, True, True, 0)
         self.external_window.connect("delete-event", self._externalWindowDeleteCb)
         self.external_window.connect("configure-event", self._externalWindowConfigureCb)
         self.external_vbox = vbox
         self.external_vbox.show_all()
 
         # Buttons/Controls
-        bbox = gtk.HBox()
-        boxalign = gtk.Alignment(xalign=0.5, yalign=0.5)
+        bbox = Gtk.HBox()
+        boxalign = Gtk.Alignment.new(xalign=0.5, yalign=0.5)
         boxalign.add(bbox)
-        self.pack_start(boxalign, expand=False)
+        self.pack_start(boxalign, False, True, 0)
 
-        self.goToStart_button = gtk.ToolButton(gtk.STOCK_MEDIA_PREVIOUS)
+        self.goToStart_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_MEDIA_PREVIOUS)
         self.goToStart_button.connect("clicked", self._goToStartCb)
         self.goToStart_button.set_tooltip_text(_("Go to the beginning of the timeline"))
         self.goToStart_button.set_sensitive(False)
-        bbox.pack_start(self.goToStart_button, expand=False)
+        bbox.pack_start(self.goToStart_button, False, True, 0)
 
-        self.back_button = gtk.ToolButton(gtk.STOCK_MEDIA_REWIND)
+        self.back_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_MEDIA_REWIND)
         self.back_button.connect("clicked", self._backCb)
         self.back_button.set_tooltip_text(_("Go back one second"))
         self.back_button.set_sensitive(False)
-        bbox.pack_start(self.back_button, expand=False)
+        bbox.pack_start(self.back_button, False, True, 0)
 
         self.playpause_button = PlayPauseButton()
         self.playpause_button.connect("play", self._playButtonCb)
-        bbox.pack_start(self.playpause_button, expand=False)
+        bbox.pack_start(self.playpause_button, False, True, 0)
         self.playpause_button.set_sensitive(False)
 
-        self.forward_button = gtk.ToolButton(gtk.STOCK_MEDIA_FORWARD)
+        self.forward_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_MEDIA_FORWARD)
         self.forward_button.connect("clicked", self._forwardCb)
         self.forward_button.set_tooltip_text(_("Go forward one second"))
         self.forward_button.set_sensitive(False)
-        bbox.pack_start(self.forward_button, expand=False)
+        bbox.pack_start(self.forward_button, False, True, 0)
 
-        self.goToEnd_button = gtk.ToolButton(gtk.STOCK_MEDIA_NEXT)
+        self.goToEnd_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_MEDIA_NEXT)
         self.goToEnd_button.connect("clicked", self._goToEndCb)
         self.goToEnd_button.set_tooltip_text(_("Go to the end of the timeline"))
         self.goToEnd_button.set_sensitive(False)
-        bbox.pack_start(self.goToEnd_button, expand=False)
+        bbox.pack_start(self.goToEnd_button, False, True, 0)
 
         # current time
         self.timecode_entry = TimeWidget()
@@ -297,7 +297,7 @@ class PitiviViewer(gtk.VBox, Loggable):
         bbox.pack_start(self.timecode_entry, expand=False, padding=10)
         self._haveUI = True
 
-        screen = gtk.gdk.screen_get_default()
+        screen = Gdk.Screen.get_default()
         height = screen.get_height()
         if height >= 800:
             # show the controls and force the aspect frame to have at least the same
@@ -351,7 +351,7 @@ class PitiviViewer(gtk.VBox, Loggable):
 
     ## active Timeline calllbacks
     def _durationChangedCb(self, unused_pipeline, duration):
-        self.debug("duration : %s", gst.TIME_ARGS(duration))
+        self.debug("duration : %s", Gst.TIME_ARGS(duration))
         position = self.posadjust.get_value()
         if duration < position:
             self.posadjust.set_value(float(duration))
@@ -366,7 +366,7 @@ class PitiviViewer(gtk.VBox, Loggable):
             seek, self._initial_seek = self._initial_seek, None
             self.pipeline.seek(seek)
 
-    ## Control gtk.Button callbacks
+    ## Control Gtk.Button callbacks
 
     def setZoom(self, zoom):
         """
@@ -377,7 +377,7 @@ class PitiviViewer(gtk.VBox, Loggable):
             maxSize = self.target.area
             width = int(float(maxSize.width) * zoom)
             height = int(float(maxSize.height) * zoom)
-            area = gtk.gdk.Rectangle((maxSize.width - width) / 2,
+            area = ((maxSize.width - width) / 2,
                                      (maxSize.height - height) / 2,
                                      width, height)
             self.sink.set_render_rectangle(*area)
@@ -394,11 +394,11 @@ class PitiviViewer(gtk.VBox, Loggable):
 
     def _backCb(self, unused_button):
         # Seek backwards one second
-        self.seeker.seekRelative(0 - gst.SECOND)
+        self.seeker.seekRelative(0 - Gst.SECOND)
 
     def _forwardCb(self, unused_button):
         # Seek forward one second
-        self.seeker.seekRelative(gst.SECOND)
+        self.seeker.seekRelative(Gst.SECOND)
 
     def _goToEndCb(self, unused_button):
         try:
@@ -421,7 +421,7 @@ class PitiviViewer(gtk.VBox, Loggable):
     def togglePlayback(self):
         if self.pipeline:
             state = togglePlayback(self.pipeline)
-            self.playing = (state == gst.STATE_PLAYING)
+            self.playing = (state == Gst.State.PLAYING)
 
     def undock(self):
         if not self.undock_action:
@@ -436,7 +436,7 @@ class PitiviViewer(gtk.VBox, Loggable):
 
         self.remove(self.buttons)
         self.external_vbox.pack_end(self.buttons, False, False)
-        self.external_window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+        self.external_window.set_type_hint(Gdk.WindowTypeHint.UTILITY)
         self.external_window.show()
         self.target = self.external
         # if we are playing, switch output immediately
@@ -479,9 +479,9 @@ class PitiviViewer(gtk.VBox, Loggable):
         or by mainwindow's _timelineSeekCb when the timer is disabled.
         """
         try:
-            self.current_time = self.pipeline.query_position(gst.FORMAT_TIME)[0]
+            self.current_time = self.pipeline.query_position(Gst.Format.TIME)[0]
             if self.current_time != self.previous_time:
-                self.info("value:%s", gst.TIME_ARGS(self.current_time))
+                self.info("value:%s", Gst.TIME_ARGS(self.current_time))
                 self.timecode_entry.setWidgetValue(self.current_time, False)
                 self.seeker.setPosition(self.current_time)
                 self.previous_time = self.current_time
@@ -494,7 +494,7 @@ class PitiviViewer(gtk.VBox, Loggable):
         If the pipeline is paused, this returns False to stop the gobject timer.
         """
         self.positionCheck()
-        return self.currentState != gst.STATE_PAUSED
+        return self.currentState != Gst.State.PAUSED
 
     def clipTrimPreview(self, clip_uri, position):
         """
@@ -502,14 +502,14 @@ class PitiviViewer(gtk.VBox, Loggable):
         """
         cur_time = time()
         if not self._tmp_pipeline:
-            self._oldTimelinePos = self.pipeline.query_position(gst.FORMAT_TIME)[0]
-            self._tmp_pipeline = gst.element_factory_make("playbin2")
+            self._oldTimelinePos = self.pipeline.query_position(Gst.Format.TIME)[0]
+            self._tmp_pipeline = Gst.ElementFactory.make("playbin2", None)
             self._tmp_pipeline.set_property("uri", clip_uri)
             self.setPipeline(self._tmp_pipeline)
             self._lastClipTrimTime = cur_time
         if (cur_time - self._lastClipTrimTime) > 0.2:
             # Do not seek more than once every 200 ms (for performance)
-            self._tmp_pipeline.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, position)
+            self._tmp_pipeline.seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH, position)
             self._lastClipTrimTime = cur_time
 
     def clipTrimPreviewFinished(self):
@@ -527,11 +527,11 @@ class PitiviViewer(gtk.VBox, Loggable):
         This is meant to be called by mainwindow.
         """
         self.info("current state changed : %s", state)
-        if int(state) == int(gst.STATE_PLAYING):
+        if int(state) == int(Gst.State.PLAYING):
             self.playpause_button.setPause()
             self.system.inhibitScreensaver(self.INHIBIT_REASON)
-            gobject.timeout_add(300, self._positionCheckTimerCb)
-        elif int(state) == int(gst.STATE_PAUSED):
+            GObject.timeout_add(300, self._positionCheckTimerCb)
+        elif int(state) == int(Gst.State.PAUSED):
             self.playpause_button.setPlay()
             self.system.uninhibitScreensaver(self.INHIBIT_REASON)
         else:
@@ -545,20 +545,20 @@ class PitiviViewer(gtk.VBox, Loggable):
         When the pipeline sends us a message to prepare-xwindow-id,
         tell the viewer to switch its output window.
         """
-        if message.type == gst.MESSAGE_ELEMENT:
+        if message.type == Gst.MessageType.ELEMENT:
             name = message.structure.get_name()
             self.log('message:%s / %s', message, name)
             if name == 'prepare-xwindow-id':
                 self.sink = message.src
                 self._switch_output_window()
-        return gst.BUS_PASS
+        return Gst.BusSyncReply.PASS
 
     def _switch_output_window(self):
-        gtk.gdk.threads_enter()
+        Gdk.threads_enter()
         self.sink.set_xwindow_id(self.target.window_xid)
         #FIXME GES: the line below doesn't seem to do anything
         #self.sink.expose()
-        gtk.gdk.threads_leave()
+        Gdk.threads_leave()
 
 
 class Point():
@@ -874,7 +874,7 @@ class TransformationBox():
             self.transformation_properties.connectSpinButtonsToFlush()
 
 
-class ViewerWidget(gtk.DrawingArea, Loggable):
+class ViewerWidget(Gtk.DrawingArea, Loggable):
     """
     Widget for displaying properly GStreamer video sink
 
@@ -885,7 +885,7 @@ class ViewerWidget(gtk.DrawingArea, Loggable):
     __gsignals__ = {}
 
     def __init__(self, settings=None):
-        gtk.DrawingArea.__init__(self)
+        Gtk.DrawingArea.__init__(self)
         Loggable.__init__(self)
         self.seeker = Seeker()
         self.settings = settings
@@ -897,14 +897,14 @@ class ViewerWidget(gtk.DrawingArea, Loggable):
         self.pixbuf = None
         self.pipeline = None
         self.transformation_properties = None
-        for state in range(gtk.STATE_INSENSITIVE + 1):
-            self.modify_bg(state, self.style.black)
+        for state in range(Gtk.StateType.INSENSITIVE + 1):
+            self.modify_bg(state, self.get_style().black)
 
     def init_transformation_events(self):
-        self.set_events(gtk.gdk.BUTTON_PRESS_MASK
-                        | gtk.gdk.BUTTON_RELEASE_MASK
-                        | gtk.gdk.POINTER_MOTION_MASK
-                        | gtk.gdk.POINTER_MOTION_HINT_MASK)
+        self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK
+                        | Gdk.EventMask.BUTTON_RELEASE_MASK
+                        | Gdk.EventMask.POINTER_MOTION_MASK
+                        | Gdk.EventMask.POINTER_MOTION_HINT_MASK)
 
     def show_box(self):
         if not self.box:
@@ -946,7 +946,7 @@ class ViewerWidget(gtk.DrawingArea, Loggable):
         if self.box and self.zoom != 1.0:
             # The transformation box is active and dezoomed
             # crop away 1 pixel border to avoid artefacts on the pixbuf
-            pixbuf = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, 0, 8,
+            pixbuf = GdkPixbuf.Pixbuf(GdkPixbuf.Colorspace.RGB, 0, 8,
                                         self.box.area.width - 2,
                                         self.box.area.height - 2)
             self.pixbuf = pixbuf.get_from_drawable(self.window, colormap,
@@ -957,7 +957,7 @@ class ViewerWidget(gtk.DrawingArea, Loggable):
                                                    self.box.area.height - 2)
         else:
             # Normal mode
-            pixbuf = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB,
+            pixbuf = GdkPixbuf.Pixbuf(GdkPixbuf.Colorspace.RGB,
                                         0, 8, *self.window.get_size())
             self.pixbuf = pixbuf.get_from_drawable(self.window, colormap,
                                         0, 0, 0, 0, *self.window.get_size())
@@ -968,7 +968,7 @@ class ViewerWidget(gtk.DrawingArea, Loggable):
         Redefine gtk DrawingArea's do_realize method to handle multiple OSes.
         This is called when creating the widget to get the window ID.
         """
-        gtk.DrawingArea.do_realize(self)
+        Gtk.DrawingArea.do_realize(self)
         if platform.system() == 'Windows':
             self.window_xid = self.window.handle
         else:
@@ -989,12 +989,12 @@ class ViewerWidget(gtk.DrawingArea, Loggable):
 
     def _currentStateCb(self, pipeline, state):
         self.pipeline = pipeline
-        if state == gst.STATE_PAUSED:
+        if state == Gst.State.PAUSED:
             self._store_pixbuf()
         self.renderbox()
 
     def motion_notify_event(self, widget, event):
-        if event.get_state() & gtk.gdk.BUTTON1_MASK:
+        if event.get_state() & Gdk.ModifierType.BUTTON1_MASK:
             if self.box.transform(event):
                 if self.stored:
                     self.renderbox()
@@ -1007,7 +1007,7 @@ class ViewerWidget(gtk.DrawingArea, Loggable):
             if self.zoom != 1.0:
                 width = int(float(self.area.width) * self.zoom)
                 height = int(float(self.area.height) * self.zoom)
-                area = gtk.gdk.Rectangle((self.area.width - width) / 2,
+                area = ((self.area.width - width) / 2,
                                      (self.area.height - height) / 2,
                                      width, height)
                 self.sink.set_render_rectangle(*area)
@@ -1048,31 +1048,31 @@ class ViewerWidget(gtk.DrawingArea, Loggable):
                 if self.box.area.width != self.pixbuf.get_width():
                     cr.restore()
 
-            if self.pipeline and self.pipeline.get_state()[1] == gst.STATE_PAUSED:
+            if self.pipeline and self.pipeline.get_state()[1] == Gst.State.PAUSED:
                 self.box.draw(cr)
             cr.pop_group_to_source()
             cr.paint()
 
 
-class PlayPauseButton(gtk.Button, Loggable):
+class PlayPauseButton(Gtk.Button, Loggable):
     """
-    Double state gtk.Button which displays play/pause
+    Double state Gtk.Button which displays play/pause
     """
     __gsignals__ = {
-        "play": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))
+        "play": (GObject.SignalFlags.RUN_LAST, None, (GObject.TYPE_BOOLEAN,))
         }
 
     def __init__(self):
-        gtk.Button.__init__(self)
+        Gtk.Button.__init__(self)
         Loggable.__init__(self)
-        self.image = gtk.Image()
+        self.image = Gtk.Image()
         self.add(self.image)
         self.playing = False
         self.setPlay()
         self.connect('clicked', self._clickedCb)
 
     def set_sensitive(self, value):
-        gtk.Button.set_sensitive(self, value)
+        Gtk.Button.set_sensitive(self, value)
 
     def _clickedCb(self, unused):
         self.playing = not self.playing
@@ -1082,7 +1082,7 @@ class PlayPauseButton(gtk.Button, Loggable):
         """ display the play image """
         self.log("setPlay")
         self.playing = True
-        self.set_image(gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_BUTTON))
+        self.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_MEDIA_PLAY, Gtk.IconSize.BUTTON))
         self.set_tooltip_text(_("Play"))
         self.playing = False
 
@@ -1090,6 +1090,6 @@ class PlayPauseButton(gtk.Button, Loggable):
         self.log("setPause")
         """ display the pause image """
         self.playing = False
-        self.set_image(gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_BUTTON))
+        self.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_MEDIA_PAUSE, Gtk.IconSize.BUTTON))
         self.set_tooltip_text(_("Pause"))
         self.playing = True
