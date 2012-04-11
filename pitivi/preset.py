@@ -408,7 +408,7 @@ class RenderPresetManager(PresetManager):
 
         framerate_num = parser["framerate-num"]
         framerate_denom = parser["framerate-denom"]
-        framerate = Fraction(framerate_num, framerate_denom)
+        framerate = Fraction(int(framerate_num), int(framerate_denom))
 
         channels = parser["channels"]
         depth = parser["depth"]

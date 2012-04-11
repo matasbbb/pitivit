@@ -26,6 +26,7 @@ to set those properties as the project settings.
 
 from gi.repository import Gtk
 from gi.repository import Gst
+from fractions import Fraction
 import os
 
 from gettext import gettext as _

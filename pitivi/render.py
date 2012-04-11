@@ -27,10 +27,11 @@ Rendering-related utilities and classes
 import os
 from gi.repository import Gtk
 from gi.repository import Gst
+from gi.repository import GstPbutils
 from gi.repository import GES
 import time
 from gi.repository import Gst
-
+from fractions import Fraction
 import pitivi.utils.loggable as log
 
 from gettext import gettext as _
@@ -868,7 +869,7 @@ class RenderDialog(Loggable):
     def startAction(self):
         """ Start the render process """
         self._pipeline.set_state(Gst.State.NULL)
-        self._pipeline.set_mode(GES.TIMELINE_MODE_SMART_RENDER)
+        self._pipeline.set_mode(GES.PipelineFlags.SMART_RENDER)
         encodebin = self._pipeline.get_by_name("internal-encodebin")
         self._gstSigId[encodebin] = encodebin.connect("element-added", self._elementAddedCb)
         self.timestarted = time.time()
@@ -884,7 +885,7 @@ class RenderDialog(Loggable):
         and disconnect from its signals """
         self._pipeline.set_state(Gst.State.NULL)
         self._disconnectFromGst()
-        self._pipeline.set_mode(GES.TIMELINE_MODE_PREVIEW)
+        self._pipeline.set_mode(GES.PipelineFlags.FULL_PREVIEW)
 
     def _pauseRender(self, progress):
         togglePlayback(self._pipeline)
@@ -947,16 +948,17 @@ class RenderDialog(Loggable):
         self.window.hide()  # Hide the rendering settings dialog while rendering
 
         # FIXME GES: Handle presets here!
-        self.containerprofile = GstPbutils.EncodingContainerProfile(None, None,
-                                    Gst.caps_from_string(self.muxertype), None)
+        self.containerprofile = \
+            GstPbutils.EncodingContainerProfile.new(None, None,
+                Gst.caps_from_string(self.muxertype), None)
 
         if self.video_output_checkbutton.get_active():
-            self.videoprofile = GstPbutils.EncodingVideoProfile(
+            self.videoprofile = GstPbutils.EncodingVideoProfile.new(
                                     Gst.caps_from_string(self.videotype), None,
                                     self.settings.getVideoCaps(True), 0)
             self.containerprofile.add_profile(self.videoprofile)
         if self.audio_output_checkbutton.get_active():
-            self.audioprofile = GstPbutils.EncodingAudioProfile(
+            self.audioprofile = GstPbutils.EncodingAudioProfile.new(
                                     Gst.caps_from_string(self.audiotype), None,
                                     self.settings.getAudioCaps(), 0)
             self.containerprofile.add_profile(self.audioprofile)

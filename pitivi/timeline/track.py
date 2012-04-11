@@ -118,9 +118,8 @@ def text_size(text):
     ink = Pango.Rectangle()
     logical = Pango.Rectangle()
     text.get_natural_extents(ink, logical)
-    #FIXME x1, y1, x2, y2 = [Pango.PIXELS(x) for x in logical]
+    Pango.extents_to_pixels(logical, None)
     return logical.width, logical.height
-    return x2 - x1, y2 - y1
 
 
 def raise_to_top(item):
@@ -377,7 +376,6 @@ class TrackObject(View, GooCanvas.CanvasGroup, Zoomable):
         self.bg = GooCanvas.CanvasRect(
             height=self.height,
             line_width=1)
-
         self.name = GooCanvas.CanvasText(
             x=NAME_HOFFSET + NAME_PADDING,
             y=NAME_VOFFSET + NAME_PADDING,
