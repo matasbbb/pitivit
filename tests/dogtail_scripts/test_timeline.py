@@ -69,11 +69,17 @@ class TimelineTest(BaseDogTail):
         self.assertIsNotNone(seektime)
         self.pitivi.findChildren(GenericPredicate(roleName="layered pane"))
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
-        dogtail.rawinput.drag((sample.position[0] + sample.size[0] / 2,
-                               sample.position[1] + sample.size[1] / 2),
-                              (timeline.position[0] + timeline.size[0] / 2,
-                               timeline.position[1] + timeline.size[1] / 2))
-        sleep(2)
+        dogtail.rawinput.press(sample.position[0] + sample.size[0] / 2,
+                               sample.position[1] + sample.size[1] / 2)
+        dogtail.rawinput.relativeMotion(10, 10)
+        dogtail.rawinput.absoluteMotion(timeline.position[0] + timeline.size[0] / 2,
+                                        timeline.position[1] + timeline.size[1] / 2)
+        sleep(1)
+        dogtail.rawinput.relativeMotion(10, 10)
+        sleep(3)
+        dogtail.rawinput.release(timeline.position[0] + timeline.size[0] / 2,
+                                 timeline.position[1] + timeline.size[1] / 2)
+        sleep(1)
         self.pitivi.child(name="Next", roleName="push button").click()
         self.assertNotEqual(seektime.text, "0:00:00.000")
 
