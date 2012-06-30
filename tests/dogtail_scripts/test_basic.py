@@ -11,9 +11,9 @@ class BaseDogTail(unittest.TestCase):
         from dogtail.config import config
         config.load({'actionDelay': 0.1,
                      'typingDelay': 0.01,
-                     'runTimeout': 3,
+                     'runTimeout': 1,
                      'searchCutoffCount': 5,
-                     'defaultDelay': 0.05})
+                     'defaultDelay': 0.1})
         from dogtail.utils import run
         from dogtail.tree import root
         #Run pitivi

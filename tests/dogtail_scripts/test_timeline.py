@@ -5,6 +5,7 @@ from test_basic import BaseDogTail
 from dogtail.predicate import GenericPredicate
 import dogtail.rawinput
 import os
+import pprint
 from time import sleep
 
 
@@ -93,6 +94,15 @@ class TimelineTest(BaseDogTail):
         self.pitivi.child(name="Next", roleName="push button").click()
         self.assertEqual(seektime.text, "0:00:01.227")
 
+    def test_transition(self):
+        self.help_test_insert_at_end()
+        seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
+        timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
+        dogtail.rawinput.drag((timeline.position[0] + 500, timeline.position[1] + 50),
+                              (timeline.position[0] + 300, timeline.position[1] + 50))
+        dogtail.rawinput.click(timeline.position[0] + 200, timeline.position[1] + 50)
+        #Check if we selected transition
+        self.assertTrue(self.pitivi.child(name="Transitions", roleName="page tab").child(roleName="layered pane").sensitive)
 
 if __name__ == '__main__':
     unittest.main()
