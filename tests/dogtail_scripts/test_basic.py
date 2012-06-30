@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 import os
+from dogtail.predicate import GenericPredicate
 
 
 class BaseDogTail(unittest.TestCase):
@@ -20,7 +21,6 @@ class BaseDogTail(unittest.TestCase):
         #If pitivi is not runned, tests are skipped
         self.pitivi = root.application('pitivi')
 
-    @unittest.skip("helper function")
     def saveAsProject(self, url):
         self.pitivi.menu("Project").click()
 
@@ -32,7 +32,6 @@ class BaseDogTail(unittest.TestCase):
         #Click the Save button.
         saveas.button('Save').click()
 
-    @unittest.skip("helper function")
     def loadProject(self, url, save=False):
         self.pitivi.menu("Project").click()
         self.pitivi.menu("Project").children[2].click()
@@ -45,6 +44,15 @@ class BaseDogTail(unittest.TestCase):
                 load.child(name="Close without saving", roleName="push button")
         except:
             return
+
+    def search_by_text(self, text, parent, name=None, roleName=None):
+        children = parent.findChildren(GenericPredicate(roleName=roleName,
+                                                        name=name))
+        searched = None
+        for child in children:
+            if child.text == text:
+                searched = child
+        return searched
 
     def tearDown(self):
         #Try to kill pitivi before leaving test

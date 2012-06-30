@@ -9,8 +9,7 @@ from time import sleep
 
 
 class TimelineTest(BaseDogTail):
-
-    def test_import_clip(self):
+    def help_test_import_clip(self):
         self.pitivi.child(name="New", roleName='push button').click()
         self.pitivi.child(name="OK", roleName="push button").click()
         self.pitivi.child(name="Import Files...",
@@ -30,14 +29,10 @@ class TimelineTest(BaseDogTail):
         self.assertIsNotNone(sample)
         return sample
 
-    def test_insert_at_end(self):
-        sample = self.test_import_clip()
+    def help_test_insert_at_end(self):
+        sample = self.help_test_import_clip()
         #Right click
-        texts = self.pitivi.findChildren(GenericPredicate(roleName="text"))
-        seektime = None
-        for text in texts:
-            if text.text == "0:00:00.000":
-                seektime = text
+        seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
 
         self.assertIsNotNone(seektime)
 
@@ -58,16 +53,12 @@ class TimelineTest(BaseDogTail):
         self.assertEqual(seektime.text, "0:00:02.455")
 
     def test_drag_clip(self):
-        sample = self.test_import_clip()
-        #Right click
-        texts = self.pitivi.findChildren(GenericPredicate(roleName="text"))
-        seektime = None
-        for text in texts:
-            if text.text == "0:00:00.000":
-                seektime = text
+        sample = self.help_test_import_clip()
 
+        seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
         self.assertIsNotNone(seektime)
-        self.pitivi.findChildren(GenericPredicate(roleName="layered pane"))
+
+        #Right click
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
         dogtail.rawinput.press(sample.position[0] + sample.size[0] / 2,
                                sample.position[1] + sample.size[1] / 2)
@@ -82,6 +73,25 @@ class TimelineTest(BaseDogTail):
         sleep(1)
         self.pitivi.child(name="Next", roleName="push button").click()
         self.assertNotEqual(seektime.text, "0:00:00.000")
+
+    def test_split(self):
+        self.help_test_insert_at_end()
+        seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
+        timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
+
+        dogtail.rawinput.click(timeline.position[0] + 500, timeline.position[1] + 50)
+        self.pitivi.child(name="Split", roleName="push button").click()
+        dogtail.rawinput.click(timeline.position[0] + 450, timeline.position[1] + 50)
+        self.pitivi.child(name="Delete", roleName="push button").click()
+
+        self.pitivi.child(name="Next", roleName="push button").click()
+        self.assertEqual(seektime.text, "0:00:02.455")
+
+        dogtail.rawinput.click(timeline.position[0] + 550, timeline.position[1] + 50)
+        self.pitivi.child(name="Delete", roleName="push button").click()
+
+        self.pitivi.child(name="Next", roleName="push button").click()
+        self.assertEqual(seektime.text, "0:00:01.227")
 
 
 if __name__ == '__main__':
