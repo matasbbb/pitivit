@@ -20,10 +20,14 @@ class BaseDogTail(unittest.TestCase):
         self.pid = run('bin/pitivi', dumb=True)
         #If pitivi is not runned, tests are skipped
         self.pitivi = root.application('pitivi')
+        try:
+            self.unlink
+        except AttributeError:
+            self.unlink = []
 
     def saveAsProject(self, url):
+        self.unlink.append(url)
         self.pitivi.menu("Project").click()
-
         #FIXME: cant get working with Save As…
         self.pitivi.menu("Project").children[4].click()
         saveas = self.pitivi.child(roleName='dialog')
@@ -38,7 +42,7 @@ class BaseDogTail(unittest.TestCase):
         load = self.pitivi.child(roleName='dialog')
         load.child(name="Type a file name", roleName="toggle button").click()
         load.child(roleName='text').text = url
-        load.button('Load').click()
+        load.button('Open').click()
         try:
             if save:
                 load.child(name="Close without saving", roleName="push button")
@@ -54,9 +58,16 @@ class BaseDogTail(unittest.TestCase):
                 searched = child
         return searched
 
-    def tearDown(self):
+    def tearDown(self, clean=True):
         #Try to kill pitivi before leaving test
         os.system("kill -9 %i" % self.pid)
+        if clean:
+            for filename in self.unlink:
+                try:
+                    os.unlink(filename)
+                except:
+                    None
+
 
 if __name__ == '__main__':
     unittest.main()

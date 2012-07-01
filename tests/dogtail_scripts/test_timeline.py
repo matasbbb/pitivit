@@ -100,9 +100,15 @@ class TimelineTest(BaseDogTail):
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
         dogtail.rawinput.drag((timeline.position[0] + 500, timeline.position[1] + 50),
                               (timeline.position[0] + 300, timeline.position[1] + 50))
+        sleep(1)
         dogtail.rawinput.click(timeline.position[0] + 200, timeline.position[1] + 50)
         #Check if we selected transition
-        self.assertTrue(self.pitivi.child(name="Transitions", roleName="page tab").child(roleName="layered pane").sensitive)
+        transitions = self.pitivi.child(name="Transitions", roleName="page tab")
+        iconlist = transitions.child(roleName="layered pane")
+        self.assertTrue(iconlist.sensitive)
+        iconlist.children[-2].select()
+        self.assertTrue(transitions.child(roleName="slider").sensitive)
+        transitions.child(roleName="slider").value = 50
 
 if __name__ == '__main__':
     unittest.main()

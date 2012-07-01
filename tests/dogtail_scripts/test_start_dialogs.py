@@ -4,7 +4,7 @@ import unittest
 from test_basic import BaseDogTail
 from dogtail.predicate import IsATextEntryNamed, GenericPredicate
 import hashlib
-from time import time
+from time import time, sleep
 
 
 class StartDialogsTest(BaseDogTail):
@@ -16,9 +16,9 @@ class StartDialogsTest(BaseDogTail):
         self.pitivi.child(name="New", roleName='push button').click()
         self.pitivi.child(name="OK", roleName="push button").click()
         self.saveAsProject("/tmp/" + filename)
-
+        sleep(2)
         #Hacky, but we need to open once more
-        self.tearDown()
+        self.tearDown(clean=False)
         self.setUp()
         welcome = self.pitivi.child(name="Welcome", roleName="frame")
         #We expect that just saved project will be in welcome window
@@ -47,8 +47,8 @@ class StartDialogsTest(BaseDogTail):
         spintext = {}
         for child in children:
                 spintext[child.text] = child
-        self.assertIn("1280", childtext)
-        self.assertIn("720", childtext)
+        self.assertIn("1280", spintext)
+        self.assertIn("720", spintext)
 
         #Test frame rate combinations, link button
         frameCombo = video.child(name="23.976 fps", roleName="combo box")
@@ -69,32 +69,34 @@ class StartDialogsTest(BaseDogTail):
 
         pixelCombo.click()
         video.child(name="576p", roleName="menu item").click()
-        self.assertEqual(pixelCombo.text, "576p")
+        self.assertEqual(pixelCombo.combovalue, "576p")
         self.assertEqual(pixelText.text, "12:11")
-        self.assertEqual(displayCombo.text, "")
+        #self.assertEqual(displayCombo.combovalue, "")
         self.assertEqual(displayText.text, "64:33")
 
         pixelText.doubleClick()
+        pixelText.click()
         pixelText.typeText("3:4")
-        self.assertEqual(pixelCombo.text, "")
+        #self.assertEqual(pixelCombo.combovalue, "")
         self.assertEqual(pixelText.text, "3:4")
-        self.assertEqual(displayCombo.text, "Standart (4:3)")
+        self.assertEqual(displayCombo.combovalue, "Standard (4:3)")
         self.assertEqual(displayText.text, "4:3")
 
         video.child(name="Display aspect ratio",
                     roleName="radio button").click()
-        pixelCombo.click()
-        video.child(name="Cinema (1.37)", roleName="manu item").click()
-        self.assertEqual(pixelCombo.text, "")
+        displayCombo.click()
+        video.child(name="Cinema (1.37)", roleName="menu item").click()
+        #self.assertEqual(pixelCombo.combovalue, "")
         self.assertEqual(pixelText.text, "99:128")
-        self.assertEqual(displayCombo.text, "Cinema (1.37)")
+        self.assertEqual(displayCombo.combovalue, "Cinema (1.37)")
         self.assertEqual(displayText.text, "11:8")
 
         displayText.doubleClick()
+        displayText.click()
         displayText.typeText("37:20")
-        self.assertEqual(pixelCombo.text, "")
+        #self.assertEqual(pixelCombo.combovalue, "")
         self.assertEqual(pixelText.text, "333:320")
-        self.assertEqual(displayCombo.text, "Cinema (1.85)")
+        self.assertEqual(displayCombo.combovalue, "Cinema (1.85)")
         self.assertEqual(displayText.text, "37:20")
 
         #Test size spin buttons
@@ -114,11 +116,14 @@ class StartDialogsTest(BaseDogTail):
         #Create project, test saving without any object
         self.pitivi.child(name="OK", roleName="push button").click()
         self.saveAsProject("/tmp/settings.xptv")
-
+        sleep(3)
         #Load project and test settings
         self.loadProject("/tmp/settings.xptv")
+        sleep(1)
         self.pitivi.menu("Edit").click()
-        self.pitivi.child(name="Project Settings", roleName="menu item")
+        self.pitivi.child(name="Project Settings", roleName="menu item").click()
+
+        video = self.pitivi.tab("Video")
 
         children = video.findChildren(IsATextEntryNamed(""))
         childtext = {}
@@ -132,8 +137,8 @@ class StartDialogsTest(BaseDogTail):
         spintext = {}
         for child in children:
                 spintext[child.text] = child
-        self.assertIn("500", childtext)
-        self.assertIn("1000", childtext)
+        self.assertIn("500", spintext)
+        self.assertIn("1000", spintext)
 
 
 if __name__ == '__main__':
