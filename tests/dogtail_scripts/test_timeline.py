@@ -30,7 +30,7 @@ class TimelineTest(BaseDogTail):
         self.assertIsNotNone(sample)
         return sample
 
-    def help_test_insert_at_end(self):
+    def help_test_insertEnd(self):
         sample = self.help_test_import_clip()
         #Right click
         seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
@@ -67,8 +67,9 @@ class TimelineTest(BaseDogTail):
         dogtail.rawinput.absoluteMotion(timeline.position[0] + timeline.size[0] / 2,
                                         timeline.position[1] + timeline.size[1] / 2)
         sleep(1)
-        dogtail.rawinput.relativeMotion(10, 10)
+        dogtail.rawinput.relativeMotion(-10, -10)
         sleep(3)
+
         dogtail.rawinput.release(timeline.position[0] + timeline.size[0] / 2,
                                  timeline.position[1] + timeline.size[1] / 2)
         sleep(1)
@@ -76,32 +77,47 @@ class TimelineTest(BaseDogTail):
         self.assertNotEqual(seektime.text, "0:00:00.000")
 
     def test_split(self):
-        self.help_test_insert_at_end()
+        self.help_test_insertEnd()
         seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
 
-        dogtail.rawinput.click(timeline.position[0] + 500, timeline.position[1] + 50)
+        #Adjust to different screen sizes
+        adj = (float)(timeline.size[0]) / 900
+
+        dogtail.rawinput.click(timeline.position[0] + 500 * adj, timeline.position[1] + 50)
         self.pitivi.child(name="Split", roleName="push button").click()
-        dogtail.rawinput.click(timeline.position[0] + 450, timeline.position[1] + 50)
+        dogtail.rawinput.click(timeline.position[0] + 450 * adj, timeline.position[1] + 50)
         self.pitivi.child(name="Delete", roleName="push button").click()
 
         self.pitivi.child(name="Next", roleName="push button").click()
         self.assertEqual(seektime.text, "0:00:02.455")
 
-        dogtail.rawinput.click(timeline.position[0] + 550, timeline.position[1] + 50)
+        dogtail.rawinput.click(timeline.position[0] + 550 * adj, timeline.position[1] + 50)
         self.pitivi.child(name="Delete", roleName="push button").click()
 
         self.pitivi.child(name="Next", roleName="push button").click()
         self.assertEqual(seektime.text, "0:00:01.227")
 
     def test_transition(self):
-        self.help_test_insert_at_end()
+        self.help_test_insertEnd()
         seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
-        dogtail.rawinput.drag((timeline.position[0] + 500, timeline.position[1] + 50),
-                              (timeline.position[0] + 300, timeline.position[1] + 50))
+        tpos = timeline.position
+
+        #Adjust to different screen sizes
+        adj = (float)(timeline.size[0]) / 900
+
+        dogtail.rawinput.press(tpos[0] + 500 * adj, tpos[1] + 50)
+        #Drag in, drag out, drag in and release
+        dogtail.rawinput.relativeMotion(-200 * adj, 10)
+        sleep(3)
+        dogtail.rawinput.relativeMotion(300 * adj, -10)
+        sleep(3)
+        dogtail.rawinput.absoluteMotion(tpos[0] + 300 * adj, tpos[1] + 50)
         sleep(1)
-        dogtail.rawinput.click(timeline.position[0] + 200, timeline.position[1] + 50)
+        dogtail.rawinput.release(tpos[0] + 300 * adj, tpos[1] + 50)
+        sleep(1)
+        dogtail.rawinput.click(tpos[0] + 250 * adj, tpos[1] + 50)
         #Check if we selected transition
         transitions = self.pitivi.child(name="Transitions", roleName="page tab")
         iconlist = transitions.child(roleName="layered pane")

@@ -7,23 +7,7 @@ import hashlib
 from time import time, sleep
 
 
-class StartDialogsTest(BaseDogTail):
-    def test_welcome(self):
-
-        filename = "test_project%i.xptv" % time()
-
-        #Save project
-        self.pitivi.child(name="New", roleName='push button').click()
-        self.pitivi.child(name="OK", roleName="push button").click()
-        self.saveAsProject("/tmp/" + filename)
-        sleep(2)
-        #Hacky, but we need to open once more
-        self.tearDown(clean=False)
-        self.setUp()
-        welcome = self.pitivi.child(name="Welcome", roleName="frame")
-        #We expect that just saved project will be in welcome window
-        welcome.child(name=filename)
-
+class ClipPropertiesTest(BaseDogTail):
     def test_settings_video(self):
         #Just create new project
         self.pitivi.child(name="New", roleName='push button').click()
@@ -130,15 +114,15 @@ class StartDialogsTest(BaseDogTail):
         for child in children:
                 childtext[child.text] = child
 
-        self.assertIn("333:320", childtext)
-        self.assertIn("37:20", childtext)
+        self.assertIn("333:320", childtext, "Pixel aspect ration not saved")
+        self.assertIn("37:20", childtext, "Display aspect ratio not saved")
 
         children = video.findChildren(GenericPredicate(roleName="spin button"))
         spintext = {}
         for child in children:
                 spintext[child.text] = child
-        self.assertIn("500", spintext)
-        self.assertIn("1000", spintext)
+        self.assertIn("500", spintext, "Video height is not saved")
+        self.assertIn("1000", spintext, "Video width is not saved")
 
 
 if __name__ == '__main__':
