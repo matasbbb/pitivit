@@ -3,35 +3,16 @@
 import unittest
 from test_basic import BaseDogTail
 from dogtail.predicate import GenericPredicate
+from helper_functions import help_test_import_media
 import dogtail.rawinput
-import os
-import pprint
 from time import sleep
 
 
 class TimelineTest(BaseDogTail):
-    def help_test_import_clip(self):
-        self.pitivi.child(name="New", roleName='push button').click()
-        self.pitivi.child(name="OK", roleName="push button").click()
-        self.pitivi.child(name="Import Files...",
-                          roleName="push button").click()
-        add = self.pitivi.child(roleName='dialog')
-        add.child(name="Type a file name", roleName="toggle button").click()
-        filepath = os.path.realpath(__file__).split("dogtail_scripts/test_timeline.py")[0]
-        filepath += "samples/1sec_simpsons_trailer.mp4"
-        add.child(roleName='text').text = filepath
-        add.button('Add').click()
-        icons = self.pitivi.findChildren(GenericPredicate(roleName="icon"))
-        sample = None
-        for icon in icons:
-            if icon.text == "1sec_simpsons_trailer.mp4":
-                sample = icon
-
-        self.assertIsNotNone(sample)
-        return sample
+    help_test_import_media = help_test_import_media
 
     def help_test_insertEnd(self):
-        sample = self.help_test_import_clip()
+        sample = self.help_test_import_media()
         #Right click
         seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
 
@@ -54,7 +35,7 @@ class TimelineTest(BaseDogTail):
         self.assertEqual(seektime.text, "0:00:02.455")
 
     def test_drag_clip(self):
-        sample = self.help_test_import_clip()
+        sample = self.help_test_import_media()
 
         seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
         self.assertIsNotNone(seektime)
