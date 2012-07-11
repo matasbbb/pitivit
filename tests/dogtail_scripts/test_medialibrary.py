@@ -16,11 +16,12 @@ class MediaLibraryTest(BaseDogTail):
         self.help_test_import_media("flat_colour2_640x480.png")
         self.help_test_import_media("flat_colour3_320x180.png")
         tab = self.pitivi.tab("Media Library")
-        self.assertEqual(len(tab.child(roleName="layered pane").children), 3)
+        iconview = tab.child(roleName="layered pane")
+        self.assertEqual(len(iconview.children), 3)
         search = tab.textentry("")
         search.text = "colour2"
-        self.assertEqual(len(tab.child(roleName="layered pane").children), 1)
+        self.assertEqual(len(iconview.children), 1)
         search.text = "640"
-        self.assertEqual(len(tab.child(roleName="layered pane").children), 2)
+        self.assertEqual(len(iconview.children), 2)
         search.text = ""
-        self.assertEqual(len(tab.child(roleName="layered pane").children), 3)
+        self.assertEqual(len(iconview.children), 3)

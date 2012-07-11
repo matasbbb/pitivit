@@ -7,7 +7,7 @@ import hashlib
 from time import time, sleep
 
 
-class ClipPropertiesTest(BaseDogTail):
+class ProjectPropertiesTest(BaseDogTail):
     def test_settings_video(self):
         #Just create new project
         self.pitivi.child(name="New", roleName='push button').click()

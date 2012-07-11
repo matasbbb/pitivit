@@ -1,6 +1,8 @@
 import os
 from dogtail.predicate import GenericPredicate
 from dogtail.tree import SearchError
+import dogtail.rawinput
+from time import sleep
 
 
 def help_test_import_media(self, filename="1sec_simpsons_trailer.mp4"):
@@ -26,3 +28,13 @@ def help_test_import_media(self, filename="1sec_simpsons_trailer.mp4"):
 
         self.assertIsNotNone(sample)
         return sample
+
+
+def drag(fromcord, tocord):
+    dogtail.rawinput.press(fromcord[0], fromcord[1])
+    dogtail.rawinput.relativeMotion(5, 5)
+    dogtail.rawinput.relativeMotion(-5, -5)
+    dogtail.rawinput.absoluteMotion(tocord[0], tocord[1])
+    dogtail.rawinput.relativeMotion(5, 5)
+    dogtail.rawinput.relativeMotion(-5, -5)
+    dogtail.rawinput.release(tocord[0], tocord[1])
