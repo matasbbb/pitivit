@@ -4,11 +4,11 @@ from dogtail.tree import SearchError
 
 
 def help_test_import_media(self, filename="1sec_simpsons_trailer.mp4"):
-        try:
+        #Just try search for object without retries
+        button = self.pitivi.findChildren(GenericPredicate(name="New", roleName="push button"))
+        if len(button) != 0:
             self.pitivi.child(name="New", roleName='push button').click()
             self.pitivi.child(name="OK", roleName="push button").click()
-        except SearchError:
-            None
 
         self.pitivi.child(name="Import Files...",
                           roleName="push button").click()
