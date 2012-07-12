@@ -12,7 +12,7 @@ from time import sleep
 class EffectLibraryTest(BaseDogTail):
     help_test_import_media = help_test_import_media
 
-    def ig_test_effect_library(self):
+    def test_effect_library(self):
         #Load sample
         self.help_test_import_media()
         tab = self.pitivi.tab("Effect Library")
@@ -51,21 +51,31 @@ class EffectLibraryTest(BaseDogTail):
         conftab = self.pitivi.tab("Clip configuration")
         conftab.click()
         table = conftab.child(roleName="table")
-        tbpos = (table.position[0] + 50, table.position[1] + 50)
 
         dogtail.rawinput.click(clippos[0], clippos[1])
-        sleep(2)
         self.assertTrue(table.sensitive)
         #No effects added
         self.assertEqual(len(table.children), 3)
 
-        iconf = lambda obj: (obj.position[0] + obj.size[0] / 2, obj.position[1] + obj.size[1] / 2)
+        center = lambda obj: (obj.position[0] + obj.size[0] / 2, obj.position[1] + obj.size[1] / 2)
         icon = self.search_by_text("Agingtv ", tab, roleName="icon")
 
-        #drag effect on the clip
-        drag(iconf(icon), clippos)
+        #Drag video effect on the clip
+        drag(center(icon), clippos)
         self.assertEqual(len(table.children), 6)
-        #drag effect to the table
+        #Drag video effect to the table
         icon = self.search_by_text("3Dflippo", tab, roleName="icon")
-        drag(iconf(icon), tbpos)
+        drag(center(icon), center(table))
         self.assertEqual(len(table.children), 9)
+
+        #Drag audio effect on the clip
+        tab.child(name="Video effects", roleName="combo box").click()
+        tab.menuItem("Audio effects").click()
+        effect = tab.child(name="Amplifier")
+        drag(center(effect), clippos)
+        self.assertEqual(len(table.children), 12)
+
+        #Drag audio effect on the table
+        effect = tab.child(name="Audiokaraoke")
+        drag(center(effect), center(table))
+        self.assertEqual(len(table.children), 15)
