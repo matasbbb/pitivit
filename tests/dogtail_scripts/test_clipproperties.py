@@ -37,19 +37,19 @@ class ClipTransforamtionTest(BaseDogTail):
         self.assertNotEqual(conftab.child(roleName="slider").value, 1)
 
         #Test position
-        spinb = conftab.panel("Position").findChildren(GenericPredicate(roleName="spin button"))
+        spinb = conftab.child(roleName="panel", name="Position").findChildren(GenericPredicate(roleName="spin button"))
         self.assertEqual(len(spinb), 2)
         spinb[0].text = 0.3
         spinb[1].text = 0.2
 
         #Test size
-        spinb = conftab.panel("Size").findChildren(GenericPredicate(roleName="spin button"))
+        spinb = conftab.child(roleName="panel", name="Size").findChildren(GenericPredicate(roleName="spin button"))
         self.assertEqual(len(spinb), 2)
         spinb[0].text = 0.4
         spinb[1].text = 0.1
 
         #Test crop
-        spinb = conftab.panel("Crop").findChildren(GenericPredicate(roleName="spin button"))
+        spinb = conftab.child(roleName="panel", name="Crop").findChildren(GenericPredicate(roleName="spin button"))
         self.assertEqual(len(spinb), 2)
         spinb[0].text = 0.05
         spinb[1].text = 0.12
@@ -64,16 +64,16 @@ class ClipTransforamtionTest(BaseDogTail):
         dogtail.rawinput.click(clippos[0][0], clippos[0][1])
         self.assertNotEqual(conftab.child(roleName="slider").value, 1)
 
-        self.assertNotNone(self.search_by_text("0.3", conftab.panel("Position")))
-        self.assertNotNone(self.search_by_text("0.2", conftab.panel("Position")))
+        self.assertNotNone(self.search_by_text("0.3", conftab.child(roleName="panel", name="Position")))
+        self.assertNotNone(self.search_by_text("0.2", conftab.child(roleName="panel", name="Position")))
 
-        self.assertNotNone(self.search_by_text("0.4", conftab.panel("Size")))
-        self.assertNotNone(self.search_by_text("0.1", conftab.panel("Size")))
+        self.assertNotNone(self.search_by_text("0.4", conftab.child(roleName="panel", name="Size")))
+        self.assertNotNone(self.search_by_text("0.1", conftab.child(roleName="panel", name="Size")))
 
-        self.assertNotNone(self.search_by_text("0.05", conftab.panel("Crop")))
-        self.assertNotNone(self.search_by_text("0.12", conftab.panel("Crop")))
-        self.assertNotNone(self.search_by_text("0.14", conftab.panel("Crop")))
-        self.assertNotNone(self.search_by_text("0.07", conftab.panel("Crop")))
+        self.assertNotNone(self.search_by_text("0.05", conftab.child(roleName="panel", name="Crop")))
+        self.assertNotNone(self.search_by_text("0.12", conftab.child(roleName="panel", name="Crop")))
+        self.assertNotNone(self.search_by_text("0.14", conftab.child(roleName="panel", name="Crop")))
+        self.assertNotNone(self.search_by_text("0.07", conftab.child(roleName="panel", name="Crop")))
 
         #Push clear
         conftab.child(roleName="scroll bar").value = 140
@@ -81,13 +81,13 @@ class ClipTransforamtionTest(BaseDogTail):
 
         self.assertEqual(conftab.child(roleName="slider").value, 1)
 
-        self.assertNone(self.search_by_text("0.3", conftab.panel("Position")))
-        self.assertNone(self.search_by_text("0.2", conftab.panel("Position")))
+        self.assertNone(self.search_by_text("0.3", conftab.child(roleName="panel", name="Position")))
+        self.assertNone(self.search_by_text("0.2", conftab.child(roleName="panel", name="Position")))
 
-        self.assertNone(self.search_by_text("0.4", conftab.panel("Size")))
-        self.assertNone(self.search_by_text("0.1", conftab.panel("Size")))
+        self.assertNone(self.search_by_text("0.4", conftab.child(roleName="panel", name="Size")))
+        self.assertNone(self.search_by_text("0.1", conftab.child(roleName="panel", name="Size")))
 
-        self.assertNone(self.search_by_text("0.05", conftab.panel("Crop")))
-        self.assertNone(self.search_by_text("0.12", conftab.panel("Crop")))
-        self.assertNone(self.search_by_text("0.14", conftab.panel("Crop")))
-        self.assertNone(self.search_by_text("0.07", conftab.panel("Crop")))
+        self.assertNone(self.search_by_text("0.05", conftab.child(roleName="panel", name="Crop")))
+        self.assertNone(self.search_by_text("0.12", conftab.child(roleName="panel", name="Crop")))
+        self.assertNone(self.search_by_text("0.14", conftab.child(roleName="panel", name="Crop")))
+        self.assertNone(self.search_by_text("0.07", conftab.child(roleName="panel", name="Crop")))
