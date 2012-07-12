@@ -16,9 +16,10 @@ class BaseDogTail(unittest.TestCase):
                      'defaultDelay': 0.1})
         from dogtail.utils import run
         from dogtail.tree import root
-        #Run pitivi
-        self.pid = run('bin/pitivi', dumb=True)
-        #If pitivi is not runned, tests are skipped
+        # Setting appName is critically important here.
+        # Otherwise it will try to look for "bin/pitivi" through AT-SPI and fail,
+        # making the tests take ages to start up.
+        self.pid = run('bin/pitivi', dumb=False, appName="pitivi")
         self.pitivi = root.application('pitivi')
         try:
             self.unlink
