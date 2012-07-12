@@ -37,7 +37,7 @@ class EffectLibraryTest(BaseDogTail):
         #Titles plus 3 plugins, two collumns = 8
         self.assertEqual(len(tab.child(roleName="table").children), 8)
 
-    def test_effect_drag(self):
+    def help_test_effect_drag(self):
         sample = self.help_test_import_media()
         sample.click(3)
         buttons = self.pitivi.findChildren(
@@ -79,3 +79,11 @@ class EffectLibraryTest(BaseDogTail):
         effect = tab.child(name="Audiokaraoke")
         drag(center(effect), center(table))
         self.assertEqual(len(table.children), 15)
+
+    def test_change_effect_settings(self):
+        self.help_test_effect_drag()
+        conftab = self.pitivi.tab("Clip configuration")
+        conftab.child(roleName="table").child(name="audioamplify").click()
+        eftab = conftab.child(name="Effects", roleName="toggle button")
+        eftab.child(name="Normal clipping (default)", roleName="combo box")
+        eftab.child(roleName="spin button").text = "2"

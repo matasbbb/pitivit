@@ -3,7 +3,7 @@
 import unittest
 from test_basic import BaseDogTail
 from dogtail.predicate import GenericPredicate
-from helper_functions import help_test_import_media
+from helper_functions import help_test_import_media, drag
 import dogtail.rawinput
 from time import sleep
 
@@ -42,18 +42,9 @@ class TimelineTest(BaseDogTail):
 
         #Right click
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
-        dogtail.rawinput.press(sample.position[0] + sample.size[0] / 2,
-                               sample.position[1] + sample.size[1] / 2)
-        dogtail.rawinput.relativeMotion(10, 10)
-        dogtail.rawinput.absoluteMotion(timeline.position[0] + timeline.size[0] / 2,
-                                        timeline.position[1] + timeline.size[1] / 2)
-        sleep(1)
-        dogtail.rawinput.relativeMotion(-10, -10)
-        sleep(3)
 
-        dogtail.rawinput.release(timeline.position[0] + timeline.size[0] / 2,
-                                 timeline.position[1] + timeline.size[1] / 2)
-        sleep(1)
+        center = lambda obj: (obj.position[0] + obj.size[0] / 2, obj.position[1] + obj.size[1] / 2)
+        drag(center(sample), center(timeline))
         self.pitivi.child(name="Next", roleName="push button").click()
         self.assertNotEqual(seektime.text, "0:00:00.000")
 

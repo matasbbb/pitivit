@@ -39,22 +39,22 @@ class ClipTransforamtionTest(BaseDogTail):
         #Test position
         spinb = conftab.child(roleName="panel", name="Position").findChildren(GenericPredicate(roleName="spin button"))
         self.assertEqual(len(spinb), 2)
-        spinb[0].text = 0.3
-        spinb[1].text = 0.2
+        spinb[0].text = "0.3"
+        spinb[1].text = "0.2"
 
         #Test size
         spinb = conftab.child(roleName="panel", name="Size").findChildren(GenericPredicate(roleName="spin button"))
         self.assertEqual(len(spinb), 2)
-        spinb[0].text = 0.4
-        spinb[1].text = 0.1
+        spinb[0].text = "0.4"
+        spinb[1].text = "0.1"
 
         #Test crop
         spinb = conftab.child(roleName="panel", name="Crop").findChildren(GenericPredicate(roleName="spin button"))
         self.assertEqual(len(spinb), 2)
-        spinb[0].text = 0.05
-        spinb[1].text = 0.12
-        spinb[2].text = 0.14
-        spinb[3].text = 0.07
+        spinb[0].text = "0.05"
+        spinb[1].text = "0.12"
+        spinb[2].text = "0.14"
+        spinb[3].text = "0.07"
 
         #Click second clip, look that settings not changed(not linked)
         dogtail.rawinput(clippos[1][0], clippos[1][1])
