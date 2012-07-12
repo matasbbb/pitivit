@@ -7,6 +7,9 @@ from dogtail.predicate import GenericPredicate
 
 class BaseDogTail(unittest.TestCase):
     def setUp(self):
+        # Force the locale/language to English.
+        # Otherwise we won't be able to grab the right widgets.
+        os.environ["LANG"] = 'C'
         #Try to speed up a little
         from dogtail.config import config
         config.load({'actionDelay': 0.1,
