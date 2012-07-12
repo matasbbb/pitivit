@@ -20,12 +20,15 @@ def help_test_import_media(self, filename="1sec_simpsons_trailer.mp4"):
         filepath += "samples/" + filename
         add.child(roleName='text').text = filepath
         add.button('Add').click()
-        icons = self.pitivi.findChildren(GenericPredicate(roleName="icon"))
-        sample = None
-        for icon in icons:
-            if icon.text == filename:
-                sample = icon
-
+        for i in range(5):
+            icons = self.pitivi.findChildren(GenericPredicate(roleName="icon"))
+            sample = None
+            for icon in icons:
+                if icon.text == filename:
+                    sample = icon
+            if sample is not None:
+                break
+            sleep(1)
         self.assertIsNotNone(sample)
         return sample
 

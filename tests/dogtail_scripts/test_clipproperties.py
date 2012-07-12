@@ -50,7 +50,7 @@ class ClipTransforamtionTest(BaseDogTail):
 
         #Test crop
         spinb = conftab.child(roleName="panel", name="Crop").findChildren(GenericPredicate(roleName="spin button"))
-        self.assertEqual(len(spinb), 2)
+        self.assertEqual(len(spinb), 4)
         spinb[0].text = "0.05"
         spinb[1].text = "0.12"
         spinb[2].text = "0.14"
