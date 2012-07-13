@@ -39,10 +39,7 @@ class EffectLibraryTest(BaseDogTail):
 
     def help_test_effect_drag(self):
         sample = self.help_test_import_media()
-        sample.click(3)
-        buttons = self.pitivi.findChildren(
-            GenericPredicate(name="Insert at End of Timeline"))
-        buttons[1].click()
+        self.insert_clip(sample)
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
         clippos = (timeline.position[0] + 20, timeline.position[1] + 20)
 

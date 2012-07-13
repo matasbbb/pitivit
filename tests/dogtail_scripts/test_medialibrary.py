@@ -16,15 +16,8 @@ class MediaLibraryTest(BaseDogTail):
         samples.append(self.help_test_import_media("flat_colour1_640x480.png"))
         samples.append(self.help_test_import_media("flat_colour2_640x480.png"))
         samples.append(self.help_test_import_media("flat_colour3_320x180.png"))
-        samples[0].click(3)
-        buttons = self.pitivi.findChildren(
-            GenericPredicate(name="Insert at End of Timeline"))
-        buttons[1].click()
-
-        samples[2].click(3)
-        buttons = self.pitivi.findChildren(
-            GenericPredicate(name="Insert at End of Timeline"))
-        buttons[1].click()
+        self.insert_clip(samples[0])
+        self.insert_clip(samples[2])
 
         self.pitivi.menu("Library").click()
         self.pitivi.menu("Library").menuItem("Select Unused Media").click()

@@ -35,6 +35,11 @@ class TimelineTest(BaseDogTail):
 
         self.assertEqual(seektime.text, "0:00:02.455")
 
+    def help_test_insertEndFast(self):
+        sample = self.help_test_import_media()
+        self.insert_clip(sample, 2)
+        self.pitivi.child(name="Next", roleName="push button").click()
+
     def test_drag_clip(self):
         sample = self.help_test_import_media()
 
@@ -72,7 +77,7 @@ class TimelineTest(BaseDogTail):
         self.assertEqual(seektime.text, "0:00:01.227")
 
     def test_multiple_split(self):
-        self.help_test_insertEnd()
+        self.help_test_insertEndFast()
         seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
         #Adjust to different screen sizes
@@ -89,7 +94,7 @@ class TimelineTest(BaseDogTail):
                 self.pitivi.child(roleName="icon")
 
     def test_transition(self):
-        self.help_test_insertEnd()
+        self.help_test_insertEndFast()
         seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
         tpos = timeline.position
@@ -136,7 +141,7 @@ class TimelineTest(BaseDogTail):
         return maxx - timeline.position[0]
 
     def test_riple_roll(self):
-        self.help_test_insertEnd()
+        self.help_test_insertEndFast()
         seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
         tpos = timeline.position

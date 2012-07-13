@@ -66,6 +66,14 @@ class BaseDogTail(unittest.TestCase):
                 searched = child
         return searched
 
+    def insert_clip(self, icon, n=1):
+        icon.select()
+        lib = self.pitivi.menu("Library")
+        insert = lib.child("Insert at End of Timeline")
+        for i in range(n):
+            lib.click()
+            insert.click()
+
     def tearDown(self, clean=True):
         #Try to kill pitivi before leaving test
         os.system("kill -9 %i" % self.pid)
@@ -75,7 +83,6 @@ class BaseDogTail(unittest.TestCase):
                     os.unlink(filename)
                 except:
                     None
-
 
 if __name__ == '__main__':
     unittest.main()

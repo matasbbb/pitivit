@@ -158,10 +158,7 @@ class ProjectPropertiesTest(BaseDogTail):
         #Change somthing
         seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
         self.assertIsNotNone(seektime)
-        sample.click(3)
-        buttons = self.pitivi.findChildren(
-            GenericPredicate(name="Insert at End of Timeline"))
-        buttons[1].click()
+        self.insert_clip(sample)
         self.pitivi.child(name="Next", roleName="push button").click()
         self.assertEqual(seektime.text, "0:00:01.227")
 
