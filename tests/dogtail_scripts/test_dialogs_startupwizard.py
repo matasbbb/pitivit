@@ -10,7 +10,7 @@ class DialogsStartupWizardTest(BaseDogTail):
         #Save project
         self.pitivi.child(name="New", roleName='push button').click()
         self.pitivi.child(name="OK", roleName="push button").click()
-        self.saveAsProject("/tmp/" + filename)
+        self.saveProject("/tmp/" + filename)
         sleep(2)
         #Hacky, but we need to open once more
         self.tearDown(clean=False)

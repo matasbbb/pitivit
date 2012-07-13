@@ -29,16 +29,20 @@ class BaseDogTail(unittest.TestCase):
         except AttributeError:
             self.unlink = []
 
-    def saveAsProject(self, url):
-        self.unlink.append(url)
+    def saveProject(self, url=None, saveAs=True):
         self.pitivi.menu("Project").click()
-        #FIXME: cant get working with Save As…
-        self.pitivi.menu("Project").children[4].click()
-        saveas = self.pitivi.child(roleName='dialog')
-        saveas.child(roleName='text').text = url
-
-        #Click the Save button.
-        saveas.button('Save').click()
+        if saveAs:
+            #FIXME: cant get working with searching for Save As…
+            self.pitivi.menu("Project").children[4].click()
+            saveas = self.pitivi.child(roleName='dialog')
+            saveas.child(roleName='text').text = url
+            #Click the Save button.
+            saveas.button('Save').click()
+            #Save for deleting afterwards
+            self.unlink.append(url)
+        else:
+            #Just save
+            self.pitivi.menu("Project").menuItem("Save").click()
 
     def loadProject(self, url, save=False):
         self.pitivi.menu("Project").click()

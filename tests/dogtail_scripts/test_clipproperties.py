@@ -57,12 +57,12 @@ class ClipTransforamtionTest(BaseDogTail):
         spinb[3].text = "0.07"
 
         #Click second clip, look that settings not changed(not linked)
-        dogtail.rawinput(clippos[1][0], clippos[1][1])
-        self.assertEqual(conftab.child(roleName="slider").value, 1)
+        dogtail.rawinput.click(clippos[1][0], clippos[1][1])
+        self.assertEqual(conftab.child(roleName="slider").value, 1.0)
 
         #Click back, look if settings saved
         dogtail.rawinput.click(clippos[0][0], clippos[0][1])
-        self.assertNotEqual(conftab.child(roleName="slider").value, 1)
+        self.assertNotEqual(conftab.child(roleName="slider").value, 1.0)
 
         self.assertNotNone(self.search_by_text("0.3", conftab.child(roleName="panel", name="Position")))
         self.assertNotNone(self.search_by_text("0.2", conftab.child(roleName="panel", name="Position")))
@@ -79,7 +79,7 @@ class ClipTransforamtionTest(BaseDogTail):
         conftab.child(roleName="scroll bar").value = 140
         conftab.button("Clear")
 
-        self.assertEqual(conftab.child(roleName="slider").value, 1)
+        self.assertEqual(conftab.child(roleName="slider").value, 1.0)
 
         self.assertNone(self.search_by_text("0.3", conftab.child(roleName="panel", name="Position")))
         self.assertNone(self.search_by_text("0.2", conftab.child(roleName="panel", name="Position")))
