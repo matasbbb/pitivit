@@ -1,15 +1,11 @@
 #!/usr/bin/env python
-import os
-import unittest
-from test_basic import BaseDogTail
+from test_help_func import HelpFunc
 from dogtail.predicate import IsATextEntryNamed, GenericPredicate
-from helper_functions import help_test_import_media
 from time import time, sleep
+import os
 
 
-class ProjectPropertiesTest(BaseDogTail):
-    help_test_import_media = help_test_import_media
-
+class ProjectPropertiesTest(HelpFunc):
     def test_settings_video(self):
         #Just create new project
         self.pitivi.child(name="New", roleName='push button').click()
@@ -146,7 +142,7 @@ class ProjectPropertiesTest(BaseDogTail):
 
     def test_backup(self):
         #Create empty project
-        sample = self.help_test_import_media()
+        sample = self.import_media()
 
         #Save project
         filename = "test_project%i.xptv" % time()
@@ -159,7 +155,8 @@ class ProjectPropertiesTest(BaseDogTail):
         seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
         self.assertIsNotNone(seektime)
         self.insert_clip(sample)
-        self.pitivi.child(name="Next", roleName="push button").click()
+        self.nextb = self.pitivi.child(name="Next", roleName="push button")
+        self.nextb.click()
         self.assertEqual(seektime.text, "0:00:01.227")
 
         #It should save after 10 seconds if no changes made
@@ -169,20 +166,20 @@ class ProjectPropertiesTest(BaseDogTail):
                         "Backup is older than saved file")
 
         #Try to quit, it should warn us
-        self.pitivi.menu("Project").click()
-        self.pitivi.menu("Project").menuItem("Quit").click()
+        self.menubar.menu("Project").click()
+        self.menubar.menu("Project").menuItem("Quit").click()
 
         #If finds button, means it warned
         self.pitivi.child("Cancel").click()
         self.saveProject(url=None, saveAs=False)
         #Backup should be deleted, and no warning displayed
-        self.pitivi.menu("Project").click()
-        self.pitivi.menu("Project").menuItem("Quit").click()
+        self.menubar.menu("Project").click()
+        self.menubar.menu("Project").menuItem("Quit").click()
         self.assertFalse(os.path.exists(backup_path))
         #Test if backup is found
         self.setUp()
         self.pitivi.child(name=filename).doubleClick()
-        sample = self.help_test_import_media("flat_colour1_640x480.png")
+        sample = self.import_media("flat_colour1_640x480.png")
         self.assertTrue(self.wait_for_file(backup_path, 120), "Backup not created")
         self.tearDown(clean=False)
         self.setUp()
@@ -191,8 +188,8 @@ class ProjectPropertiesTest(BaseDogTail):
         self.pitivi.child(name="Restore from backup").click()
         samples = self.pitivi.tab("Media Library").findChildren(GenericPredicate(roleName="icon"))
         self.assertEqual(len(samples), 2)
-        self.pitivi.menu("Project").click()
-        self.assertFalse(self.pitivi.menu("Project").menuItem("Save").sensitive)
+        self.menubar.menu("Project").click()
+        self.assertFalse(self.menubar.menu("Project").menuItem("Save").sensitive)
         #Behaved as saveAs
 
         #Kill once more
@@ -205,21 +202,17 @@ class ProjectPropertiesTest(BaseDogTail):
         self.assertEqual(timestamp, os.path.getmtime(backup_path))
 
         #Look if backup updated, even it is newer than saved project
-        sample = self.help_test_import_media("flat_colour2_640x480.png")
+        sample = self.import_media("flat_colour2_640x480.png")
         self.assertTrue(self.wait_for_update(backup_path, timestamp))
         #Try to quit, it should warn us (still newer version)
-        self.pitivi.menu("Project").click()
-        self.pitivi.menu("Project").menuItem("Quit").click()
+        self.menubar.menu("Project").click()
+        self.menubar.menu("Project").menuItem("Quit").click()
 
         #If finds button, means it warned
         self.pitivi.child("Cancel").click()
         self.saveProject(url=None, saveAs=False)
 
         #Backup should be deleted, and no warning displayed
-        self.pitivi.menu("Project").click()
-        self.pitivi.menu("Project").menuItem("Quit").click()
+        self.menubar.menu("Project").click()
+        self.menubar.menu("Project").menuItem("Quit").click()
         self.assertFalse(os.path.exists(backup_path))
-
-
-if __name__ == '__main__':
-    unittest.main()

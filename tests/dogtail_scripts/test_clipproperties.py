@@ -1,20 +1,14 @@
 #!/usr/bin/env python
-import unittest
-from test_basic import BaseDogTail
-from dogtail.tree import SearchError
-from helper_functions import help_test_import_media, drag
-from dogtail.predicate import GenericPredicate, IsATextEntryNamed
-from dogtail.tree import SearchError
+from test_help_func import HelpFunc
+from dogtail.predicate import GenericPredicate
 import dogtail.rawinput
 from time import sleep
 
 
-class ClipTransforamtionTest(BaseDogTail):
-    help_test_import_media = help_test_import_media
-
+class ClipTransforamtionTest(HelpFunc):
     def test_transformation_options(self):
         #Load sample
-        sample = self.help_test_import_media()
+        sample = self.import_media()
         self.insert_clip(sample)
 
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]

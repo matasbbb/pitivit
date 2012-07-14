@@ -1,26 +1,19 @@
 #!/usr/bin/env python
-import unittest
-from test_basic import BaseDogTail
-from dogtail.tree import SearchError
-from helper_functions import help_test_import_media
-from dogtail.predicate import GenericPredicate, IsATextEntryNamed
-from dogtail.tree import SearchError
+from test_help_func import HelpFunc
 
 
-class MediaLibraryTest(BaseDogTail):
-    help_test_import_media = help_test_import_media
-
+class MediaLibraryTest(HelpFunc):
     def test_medialibrary(self):
         #Load few samples
         samples = []
-        samples.append(self.help_test_import_media("flat_colour1_640x480.png"))
-        samples.append(self.help_test_import_media("flat_colour2_640x480.png"))
-        samples.append(self.help_test_import_media("flat_colour3_320x180.png"))
+        samples.append(self.import_media("flat_colour1_640x480.png"))
+        samples.append(self.import_media("flat_colour2_640x480.png"))
+        samples.append(self.import_media("flat_colour3_320x180.png"))
         self.insert_clip(samples[0])
         self.insert_clip(samples[2])
 
-        self.pitivi.menu("Library").click()
-        self.pitivi.menu("Library").menuItem("Select Unused Media").click()
+        self.menubar.menu("Library").click()
+        self.menubar.menu("Library").menuItem("Select Unused Media").click()
         self.assertFalse(samples[0].isSelected)
         self.assertTrue(samples[1].isSelected)
         self.assertFalse(samples[2].isSelected)

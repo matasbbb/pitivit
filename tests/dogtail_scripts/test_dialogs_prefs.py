@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-import unittest
-from test_basic import BaseDogTail
+from test_help_func import HelpFunc
 from dogtail.tree import SearchError
+import dogtail.rawinput
 
 
-class DialogsPreferencesTest(BaseDogTail):
+class DialogsPreferencesTest(HelpFunc):
     def test_pref_dialog(self):
-        self.pitivi.child(name="New", roleName='push button').click()
-        self.pitivi.child(name="OK", roleName="push button").click()
-        self.pitivi.menu("Edit").click()
-        self.pitivi.child(name="Preferences", roleName="menu item").click()
+        dogtail.rawinput.pressKey("Esc")
+        self.menubar.menu("Edit").click()
+        self.menubar.child(name="Preferences", roleName="menu item").click()
         dialog = self.pitivi.child(name="Preferences", roleName="dialog")
         dialog.child("Reset to Factory Settings", roleName="push button").click()
 
@@ -27,10 +26,10 @@ class DialogsPreferencesTest(BaseDogTail):
 
         self.tearDown()
         self.setUp()
-        self.pitivi.child(name="New", roleName='push button').click()
-        self.pitivi.child(name="OK", roleName="push button").click()
-        self.pitivi.menu("Edit").click()
-        self.pitivi.child(name="Preferences", roleName="menu item").click()
+
+        dogtail.rawinput.pressKey("Esc")
+        self.menubar.menu("Edit").click()
+        self.menubar.child(name="Preferences", roleName="menu item").click()
         dialog = self.pitivi.child(name="Preferences", roleName="dialog")
 
         #Just search of such item

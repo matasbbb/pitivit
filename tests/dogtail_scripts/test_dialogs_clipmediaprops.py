@@ -1,50 +1,45 @@
 #!/usr/bin/env python
-import unittest
-from test_basic import BaseDogTail
+from test_help_func import HelpFunc
 from dogtail.tree import SearchError
-from helper_functions import help_test_import_media
 from dogtail.predicate import GenericPredicate, IsATextEntryNamed
-from dogtail.tree import SearchError
 
 
-class DialogsClipMediaPropsTest(BaseDogTail):
-    help_test_import_media = help_test_import_media
-
-    def test_pref_dialog(self):
-        sample = self.help_test_import_media("flat_colour1_640x480.png")
+class DialogsClipMediaPropsTest(HelpFunc):
+    def test_clip_props_dialog(self):
+        sample = self.import_media("flat_colour1_640x480.png")
         sample.click(3)
         buttons = self.pitivi.findChildren(GenericPredicate(name="Clip Properties..."))
         buttons[1].click()
         #Check if we have real info, can't check if in correct place.
         dialog = self.pitivi.child(name="Clip Properties", roleName="dialog")
-        labels = ["640", "480"]
-        for label in labels:
-            try:
-                dialog.child(name=label, roleName="label")
-            except SearchError:
-                self.fail("Not displayed %s in clip information" % label)
+        labels = {"640", "480"}
+        real_labels = set([])
+        for label in dialog.findChildren(GenericPredicate(roleName="label")):
+            real_labels.add(label.text)
+        self.assertEqual(len(labels.difference(real_labels)), 0, "Not all info is displayed")
         self.assertFalse(dialog.child(name="Audio:", roleName="panel").showing)
         dialog.child(name="Cancel").click()
+        sample.deselect()
 
-        sample = self.help_test_import_media()
-        sample.click(3)
-        buttons = self.pitivi.findChildren(GenericPredicate(name="Clip Properties..."))
-        buttons[1].click()
+        sample = self.import_media()
+        sample.select()
+        self.menubar.menu("Library").click()
+        self.menubar.menuItem("Clip Properties...").click()
+
         #Check if we have real info, can't check if in correct place.
         dialog = self.pitivi.child(name="Clip Properties", roleName="dialog")
-        labels = ["1280", "544", "23.976 fps", "Square", "Stereo", "48 KHz", "16 bit"]
-        for label in labels:
-            try:
-                dialog.child(name=label, roleName="label")
-            except SearchError:
-                self.fail("Not displayed %s in clip information" % label)
+        labels = {"1280", "544", "23.976 fps", "Square", "Stereo", "48 KHz", "16 bit"}
+        real_labels = set([])
+        for label in dialog.findChildren(GenericPredicate(roleName="label")):
+            real_labels.add(label.text)
+        self.assertEqual(len(labels.difference(real_labels)), 0, "Not all info is displayed")
 
         #Uncheck frame rate
         dialog.child(name="Frame rate:").click()
         dialog.child(name="Apply to project").click()
 
         #Check if applied
-        self.pitivi.menu("Edit").click()
+        self.menubar.menu("Edit").click()
         self.pitivi.child(name="Project Settings", roleName="menu item").click()
         dialog = self.pitivi.child(name="Project Settings", roleName="dialog")
 

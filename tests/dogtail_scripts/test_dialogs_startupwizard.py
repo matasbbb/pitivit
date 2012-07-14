@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-import unittest
-from test_basic import BaseDogTail
+from test_help_func import HelpFunc
 from time import time, sleep
 
 
-class DialogsStartupWizardTest(BaseDogTail):
+class DialogsStartupWizardTest(HelpFunc):
     def test_welcome(self):
         filename = "test_project%i.xptv" % time()
         #Save project

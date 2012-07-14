@@ -1,19 +1,20 @@
 #!/usr/bin/env python
-import unittest
-from test_basic import BaseDogTail
+from test_help_func import HelpFunc
 from dogtail.predicate import GenericPredicate
-from helper_functions import help_test_import_media, drag
+from helper_functions import improved_drag
 import dogtail.rawinput
 from time import sleep
 from pyatspi import Registry as registry
 from pyatspi import (KEY_SYM, KEY_PRESS, KEY_PRESSRELEASE, KEY_RELEASE)
 
 
-class TimelineTest(BaseDogTail):
-    help_test_import_media = help_test_import_media
+class TimelineTest(HelpFunc):
+    def setUp(self):
+        super(TimelineTest, self).setUp()
+        self.nextb = self.pitivi.child(name="Next", roleName="push button")
 
     def help_test_insertEnd(self):
-        sample = self.help_test_import_media()
+        sample = self.import_media()
         #Right click
         seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
 
@@ -23,7 +24,7 @@ class TimelineTest(BaseDogTail):
         buttons = self.pitivi.findChildren(
             GenericPredicate(name="Insert at End of Timeline"))
         buttons[1].click()
-        self.pitivi.child(name="Next", roleName="push button").click()
+        self.nextb.click()
         self.assertEqual(seektime.text, "0:00:01.227")
 
         #Add one more
@@ -31,17 +32,17 @@ class TimelineTest(BaseDogTail):
         buttons = self.pitivi.findChildren(
             GenericPredicate(name="Insert at End of Timeline"))
         buttons[1].click()
-        self.pitivi.child(name="Next", roleName="push button").click()
+        self.nextb.click()
 
         self.assertEqual(seektime.text, "0:00:02.455")
 
     def help_test_insertEndFast(self):
-        sample = self.help_test_import_media()
+        sample = self.import_media()
         self.insert_clip(sample, 2)
-        self.pitivi.child(name="Next", roleName="push button").click()
+        self.nextb.click()
 
     def test_drag_clip(self):
-        sample = self.help_test_import_media()
+        sample = self.import_media()
 
         seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
         self.assertIsNotNone(seektime)
@@ -50,8 +51,8 @@ class TimelineTest(BaseDogTail):
         timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
 
         center = lambda obj: (obj.position[0] + obj.size[0] / 2, obj.position[1] + obj.size[1] / 2)
-        drag(center(sample), center(timeline))
-        self.pitivi.child(name="Next", roleName="push button").click()
+        improved_drag(center(sample), center(timeline))
+        self.nextb.click()
         self.assertNotEqual(seektime.text, "0:00:00.000")
 
     def test_split(self):
@@ -67,13 +68,14 @@ class TimelineTest(BaseDogTail):
         dogtail.rawinput.click(timeline.position[0] + 450 * adj, timeline.position[1] + 50)
         self.pitivi.child(name="Delete", roleName="push button").click()
 
-        self.pitivi.child(name="Next", roleName="push button").click()
+        self.nextb.click()
         self.assertEqual(seektime.text, "0:00:02.455")
 
         dogtail.rawinput.click(timeline.position[0] + 550 * adj, timeline.position[1] + 50)
-        self.pitivi.child(name="Delete", roleName="push button").click()
+        dogtail.rawinput.pressKey("Del")
+        #self.pitivi.child(name="Delete", roleName="push button").click()
 
-        self.pitivi.child(name="Next", roleName="push button").click()
+        self.nextb.click()
         self.assertEqual(seektime.text, "0:00:01.227")
 
     def test_multiple_split(self):
@@ -155,7 +157,7 @@ class TimelineTest(BaseDogTail):
         sleep(0.5)
         dogtail.rawinput.release(tpos[0] + end / 2 - 100, tpos[1] + 30)
         registry.generateKeyboardEvent(dogtail.rawinput.keyNameToKeyCode("Control_L"), None, KEY_RELEASE)
-        self.pitivi.child(name="Next", roleName="push button").click()
+        self.nextb.click()
         self.assertNotEqual(seektime.text, "0:00:02.455", "Not ripled, but trimed")
 
         #Regresion test of adding effect
@@ -167,8 +169,8 @@ class TimelineTest(BaseDogTail):
         center = lambda obj: (obj.position[0] + obj.size[0] / 2, obj.position[1] + obj.size[1] / 2)
         table = conftab.child(roleName="table")
         icon = self.search_by_text("Agingtv ", tab, roleName="icon")
-        drag(center(icon), center(table))
-        self.pitivi.child(name="Next", roleName="push button").click()
+        improved_drag(center(icon), center(table))
+        self.nextb.click()
         seekbefore = seektime.text
         #Try riple and roll
         dogtail.rawinput.absoluteMotion(tpos[0] + end / 2 - 102, tpos[1] + 30)
@@ -179,8 +181,5 @@ class TimelineTest(BaseDogTail):
         sleep(0.5)
         dogtail.rawinput.release(tpos[0] + end / 2 - 200, tpos[1] + 30)
         registry.generateKeyboardEvent(dogtail.rawinput.keyNameToKeyCode("Control_L"), None, KEY_RELEASE)
-        self.pitivi.child(name="Next", roleName="push button").click()
+        self.nextb.click()
         self.assertNotEqual(seektime.text, seekbefore, "Not ripled affter adding effect")
-
-if __name__ == '__main__':
-    unittest.main()
