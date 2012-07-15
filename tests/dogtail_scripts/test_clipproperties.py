@@ -11,7 +11,7 @@ class ClipTransforamtionTest(HelpFunc):
         sample = self.import_media()
         self.insert_clip(sample)
 
-        timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
+        timeline = self.get_timeline()
         clippos = []
         clippos.append((timeline.position[0] + 20, timeline.position[1] + 20))
         clippos.append((timeline.position[0] + timeline.size[0] / 2, timeline.position[1] + 20))

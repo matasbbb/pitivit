@@ -79,3 +79,7 @@ class HelpFunc(BaseDogTail):
             sleep(0.5)
         self.assertIsNotNone(sample)
         return sample
+
+    def get_timeline(self):
+        #TODO: found better way to identify
+        return self.pitivi.children[0].children[0].children[2].children[1].children[3]

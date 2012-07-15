@@ -43,23 +43,38 @@ class TimelineTest(HelpFunc):
 
     def test_drag_clip(self):
         sample = self.import_media()
-
         seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
         self.assertIsNotNone(seektime)
 
-        #Right click
-        timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
+        timeline = self.get_timeline()
 
         center = lambda obj: (obj.position[0] + obj.size[0] / 2, obj.position[1] + obj.size[1] / 2)
         improved_drag(center(sample), center(timeline))
         self.nextb.click()
         self.assertNotEqual(seektime.text, "0:00:00.000")
 
+    def test_multiple_drag(self):
+        sample = self.import_media()
+        seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
+        timeline = self.get_timeline()
+        self.assertIsNotNone(seektime)
+        oldseek = seektime.text
+        center = lambda obj: (obj.position[0] + obj.size[0] / 2, obj.position[1] + obj.size[1] / 2)
+        endpos = (timeline.position[0] + timeline.size[0] - 30, timeline.position[1] + 30)
+        for i in range(20):
+            if (i % 4 == 0):
+                improved_drag(center(sample), endpos, middle=[center(timeline), center(sample)])
+            else:
+                improved_drag(center(sample), endpos)
+            sleep(0.3)
+            self.nextb.click()
+            self.assertNotEqual(oldseek, seektime.text)
+            oldseek = seektime.text
+
     def test_split(self):
         self.help_test_insertEnd()
         seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
-        timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
-
+        timeline = self.get_timeline()
         #Adjust to different screen sizes
         adj = (float)(timeline.size[0]) / 883
 
@@ -81,7 +96,7 @@ class TimelineTest(HelpFunc):
     def test_multiple_split(self):
         self.help_test_insertEndFast()
         seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
-        timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
+        timeline = self.get_timeline()
         #Adjust to different screen sizes
         adj = (float)(timeline.size[0]) / 883
         tpos = timeline.position
@@ -98,7 +113,7 @@ class TimelineTest(HelpFunc):
     def test_transition(self):
         self.help_test_insertEndFast()
         seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
-        timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
+        timeline = self.get_timeline()
         tpos = timeline.position
 
         #Adjust to different screen sizes
@@ -145,7 +160,7 @@ class TimelineTest(HelpFunc):
     def test_riple_roll(self):
         self.help_test_insertEndFast()
         seektime = self.search_by_text("0:00:02.455", self.pitivi, roleName="text")
-        timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
+        timeline = self.get_timeline()
         tpos = timeline.position
         end = self.search_clip_end(30, seektime, timeline)
 

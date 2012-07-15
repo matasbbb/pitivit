@@ -33,7 +33,7 @@ class EffectLibraryTest(HelpFunc):
     def help_test_effect_drag(self):
         sample = self.import_media()
         self.insert_clip(sample)
-        timeline = self.pitivi.children[0].children[0].children[2].children[1].children[3]
+        timeline = self.get_timeline()
         clippos = (timeline.position[0] + 20, timeline.position[1] + 20)
 
         tab = self.pitivi.tab("Effect Library")
