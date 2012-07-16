@@ -98,10 +98,8 @@ class ProjectPropertiesTest(HelpFunc):
         #Create project, test saving without any object
         self.pitivi.child(name="OK", roleName="push button").click()
         self.saveProject("/tmp/settings.xptv")
-        sleep(3)
         #Load project and test settings
         self.loadProject("/tmp/settings.xptv")
-        sleep(1)
         self.pitivi.menu("Edit").click()
         self.pitivi.child(name="Project Settings", roleName="menu item").click()
 
@@ -202,6 +200,7 @@ class ProjectPropertiesTest(HelpFunc):
         self.assertEqual(timestamp, os.path.getmtime(backup_path))
 
         #Look if backup updated, even it is newer than saved project
+
         sample = self.import_media("flat_colour2_640x480.png")
         self.assertTrue(self.wait_for_update(backup_path, timestamp))
         #Try to quit, it should warn us (still newer version)
@@ -216,3 +215,53 @@ class ProjectPropertiesTest(HelpFunc):
         self.menubar.menu("Project").click()
         self.menubar.menu("Project").menuItem("Quit").click()
         self.assertFalse(os.path.exists(backup_path))
+
+    def test_aload_save(self):
+        self.nextb = self.pitivi.child(name="Next", roleName="push button")
+        tab = self.pitivi.tab("Media Library")
+        seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
+        infobar_media = tab.child(name="Add media to your project by dragging files and folders here or by using the \"Import Files...\" button.")
+        filename1 = "/tmp/test_project%i.xptv" % time()
+        filename2 = "/tmp/test_project%i.xptv" % time()
+
+        #Create project
+        self.assertTrue(infobar_media.showing)
+        sample = self.import_media()
+        self.insert_clip(sample)
+        self.saveProject(filename1)
+        self.assertFalse(infobar_media.showing)
+
+        #Create new, check if cleaned
+        sleep(0.5)
+        self.menubar.menu("Project").click()
+        self.menubar.menu("Project").menuItem("New").click()
+        self.pitivi.child(name="OK", roleName="push button").click()
+
+        icons = tab.findChildren(GenericPredicate(roleName="icon"))
+        self.nextb.click()
+        self.assertEqual(len(icons), 0)
+        self.assertEqual(seektime.text, "0:00:00.000")
+        self.assertTrue(infobar_media.showing)
+
+        #Create bigger project
+        sample = self.import_media()
+        self.import_media("flat_colour1_640x480.png")
+        self.insert_clip(sample, 2)
+        self.saveProject(filename2)
+        self.assertFalse(infobar_media.showing)
+
+        #Load first, check if populated
+        self.load_project(filename1)
+        icons = tab.findChildren(GenericPredicate(roleName="icon"))
+        self.nextb.click()
+        self.assertEqual(len(icons), 1)
+        self.assertEqual(seektime.text, "0:00:01.227")
+        self.assertFalse(infobar_media.showing)
+
+        #Load second, check if populated
+        self.load_project(filename2)
+        icons = tab.findChildren(GenericPredicate(roleName="icon"))
+        self.nextb.click()
+        self.assertEqual(len(icons), 2)
+        self.assertEqual(seektime.text, "0:00:02.455")
+        self.assertFalse(infobar_media.showing)

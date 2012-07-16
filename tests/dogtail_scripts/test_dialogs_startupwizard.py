@@ -10,7 +10,7 @@ class DialogsStartupWizardTest(HelpFunc):
         self.pitivi.child(name="New", roleName='push button').click()
         self.pitivi.child(name="OK", roleName="push button").click()
         self.saveProject("/tmp/" + filename)
-        sleep(2)
+        sleep(1)
         #Hacky, but we need to open once more
         self.tearDown(clean=False)
         self.setUp()

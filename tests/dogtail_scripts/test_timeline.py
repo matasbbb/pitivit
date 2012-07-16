@@ -60,13 +60,19 @@ class TimelineTest(HelpFunc):
         self.assertIsNotNone(seektime)
         oldseek = seektime.text
         center = lambda obj: (obj.position[0] + obj.size[0] / 2, obj.position[1] + obj.size[1] / 2)
-        endpos = (timeline.position[0] + timeline.size[0] - 30, timeline.position[1] + 30)
+        endpos = []
+        endpos.append((timeline.position[0] + timeline.size[0] - 30, timeline.position[1] + 30))
+        endpos.append((timeline.position[0] + timeline.size[0] - 30, timeline.position[1] + 120))
+        endpos.append((timeline.position[0] + timeline.size[0] - 30, timeline.position[1] + 80))
         for i in range(20):
             if (i % 4 == 0):
-                improved_drag(center(sample), endpos, middle=[center(timeline), center(sample)])
+                #Drag to center, next layer, out, and then back in
+                improved_drag(center(sample), endpos[i % 3], middle=[center(timeline), endpos[(i + 1) % 2], center(sample)])
             else:
-                improved_drag(center(sample), endpos)
-            sleep(0.3)
+                #Simple drag
+                improved_drag(center(sample), endpos[i % 3])
+            #Give time to insert object
+            sleep(0.5)
             self.nextb.click()
             self.assertNotEqual(oldseek, seektime.text)
             oldseek = seektime.text
@@ -105,7 +111,7 @@ class TimelineTest(HelpFunc):
         for k in pos:
             for p in pos:
                 dogtail.rawinput.click(tpos[0] + (p + k / 10) * adj, tpos[1] + 50)
-                sleep(0.3)
+                sleep(0.1)
                 dogtail.rawinput.pressKey("s")
                 #Just search some object to look if it still alive
                 self.pitivi.child(roleName="icon")
@@ -122,9 +128,9 @@ class TimelineTest(HelpFunc):
         dogtail.rawinput.press(tpos[0] + 500 * adj, tpos[1] + 50)
         #Drag in, drag out, drag in and release
         dogtail.rawinput.relativeMotion(-200 * adj, 10)
-        sleep(3)
+        sleep(1)
         dogtail.rawinput.relativeMotion(300 * adj, -10)
-        sleep(3)
+        sleep(1)
         dogtail.rawinput.absoluteMotion(tpos[0] + 300 * adj, tpos[1] + 50)
         sleep(1)
         dogtail.rawinput.release(tpos[0] + 300 * adj, tpos[1] + 50)

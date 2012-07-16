@@ -62,7 +62,9 @@ class HelpFunc(BaseDogTail):
         self.pitivi.child(name="Import Files...",
                           roleName="push button").click()
         add = self.pitivi.child(roleName='dialog')
-        add.child(name="Type a file name", roleName="toggle button").click()
+        textf = add.findChildren(GenericPredicate(roleName="text"))
+        if len(textf) == 0:
+            add.child(name="Type a file name", roleName="toggle button").click()
         filepath = os.path.realpath(__file__).split("dogtail_scripts/test_help_func.py")[0]
         filepath += "samples/" + filename
         add.child(roleName='text').text = filepath
