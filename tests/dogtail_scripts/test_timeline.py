@@ -204,3 +204,15 @@ class TimelineTest(HelpFunc):
         registry.generateKeyboardEvent(dogtail.rawinput.keyNameToKeyCode("Control_L"), None, KEY_RELEASE)
         self.nextb.click()
         self.assertNotEqual(seektime.text, seekbefore, "Not ripled affter adding effect")
+
+    def test_image_video_mix(self):
+        files = ["1sec_simpsons_trailer.mp4", "flat_colour2_640x480.png",
+                 "flat_colour4_1600x1200.jpg", "flat_colour1_640x480.png",
+                 "flat_colour3_320x180.png", "flat_colour5_1600x1200.jpg"]
+        samples = self.import_media_multiple(files)
+
+        #One video, one image
+        for sample in samples:
+            self.insert_clip(sample)
+
+        #TODO: do somthing with clips

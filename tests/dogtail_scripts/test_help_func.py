@@ -6,6 +6,8 @@ from dogtail.predicate import GenericPredicate
 from test_base import BaseDogTail
 import dogtail.rawinput
 from time import sleep
+from pyatspi import Registry as registry
+from pyatspi import (KEY_SYM, KEY_PRESS, KEY_PRESSRELEASE, KEY_RELEASE)
 
 
 class HelpFunc(BaseDogTail):
@@ -55,6 +57,7 @@ class HelpFunc(BaseDogTail):
             lib.click()
             sleep(0.1)
             insert.click()
+        icon.deselect()
 
     def import_media(self, filename="1sec_simpsons_trailer.mp4"):
         #Just try search for object without retries
@@ -81,6 +84,43 @@ class HelpFunc(BaseDogTail):
             sleep(0.5)
         self.assertIsNotNone(sample)
         return sample
+
+    def import_media_multiple(self, files):
+        dogtail.rawinput.pressKey("Esc")
+        self.pitivi.child(name="Import Files...",
+                          roleName="push button").click()
+        add = self.pitivi.child(roleName='dialog')
+        textf = add.findChildren(GenericPredicate(roleName="text"))
+        if len(textf) == 0:
+            add.child(name="Type a file name", roleName="toggle button").click()
+        filepath = os.path.realpath(__file__).split("dogtail_scripts/test_help_func.py")[0]
+        filepath += "samples/"
+        add.child(roleName='text').click()
+        add.child(roleName='text').text = filepath
+        dogtail.rawinput.pressKey("Enter")
+        sleep(1)
+        #Now select them
+        code = dogtail.rawinput.keyNameToKeyCode("Control_L")
+        sleep(10)
+        registry.generateKeyboardEvent(code, None, KEY_PRESS)
+        for f in files:
+            sleep(1)
+            add.child(name=f).click()
+        registry.generateKeyboardEvent(code, None, KEY_RELEASE)
+        add.button('Add').click()
+        libtab = self.pitivi.tab("Media Library")
+        samples = []
+        for i in range(5):
+            icons = libtab.findChildren(GenericPredicate(roleName="icon"))
+            for icon in icons:
+                for f in files:
+                    if icon.text == f:
+                        samples.append(icon)
+                        files.remove(f)
+            if len(files) == 0:
+                break
+            sleep(0.5)
+        return samples
 
     def get_timeline(self):
         #TODO: found better way to identify
