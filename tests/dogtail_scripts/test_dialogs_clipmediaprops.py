@@ -10,6 +10,7 @@ class DialogsClipMediaPropsTest(HelpFunc):
         sample.click(3)
         buttons = self.pitivi.findChildren(GenericPredicate(name="Clip Properties..."))
         buttons[1].click()
+
         #Check if we have real info, can't check if in correct place.
         dialog = self.pitivi.child(name="Clip Properties", roleName="dialog")
         labels = {"640", "480"}
@@ -38,7 +39,7 @@ class DialogsClipMediaPropsTest(HelpFunc):
         dialog.child(name="Frame rate:").click()
         dialog.child(name="Apply to project").click()
 
-        #Check if applied
+        #Check if correctly applied
         self.menubar.menu("Edit").click()
         self.pitivi.child(name="Project Settings", roleName="menu item").click()
         dialog = self.pitivi.child(name="Project Settings", roleName="dialog")

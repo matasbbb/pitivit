@@ -205,7 +205,7 @@ class TimelineTest(HelpFunc):
         self.nextb.click()
         self.assertNotEqual(seektime.text, seekbefore, "Not ripled affter adding effect")
 
-    def test_aimage_video_mix(self):
+    def test_image_video_mix(self):
         files = ["1sec_simpsons_trailer.mp4", "flat_colour2_640x480.png",
                  "flat_colour4_1600x1200.jpg", "flat_colour1_640x480.png",
                  "flat_colour3_320x180.png", "flat_colour5_1600x1200.jpg"]
@@ -230,7 +230,6 @@ class TimelineTest(HelpFunc):
         dogtail.rawinput.release(tpos[0] + cend - 40, tpos[1] + 30)
         registry.generateKeyboardEvent(dogtail.rawinput.keyNameToKeyCode("Shift_L"), None, KEY_RELEASE)
         self.nextb.click()
-        sleep(2)
         self.assertNotEqual(seektime.text, "0:00:11.139")
 
         #TODO: do something more with clips

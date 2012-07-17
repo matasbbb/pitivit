@@ -216,7 +216,7 @@ class ProjectPropertiesTest(HelpFunc):
         self.menubar.menu("Project").menuItem("Quit").click()
         self.assertFalse(os.path.exists(backup_path))
 
-    def test_aload_save(self):
+    def test_load_save(self):
         self.nextb = self.pitivi.child(name="Next", roleName="push button")
         tab = self.pitivi.tab("Media Library")
         seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
