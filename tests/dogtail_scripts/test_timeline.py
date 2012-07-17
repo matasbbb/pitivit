@@ -145,8 +145,8 @@ class TimelineTest(HelpFunc):
         transitions.child(roleName="slider").value = 50
 
     def search_clip_end(self, y, seek, timeline):
-        minx = timeline.position[0] + 10
-        maxx = timeline.position[0] + timeline.size[0] - 10
+        minx = timeline.position[0] + 10.
+        maxx = timeline.position[0] + timeline.size[0] - 10.
         minx = (minx + maxx) / 2
         y += timeline.position[1]
         dogtail.rawinput.click(maxx, y)
@@ -160,8 +160,8 @@ class TimelineTest(HelpFunc):
                 maxx = middle
             else:
                 minx = middle
-
-        return maxx - timeline.position[0]
+        #+5 due to handle size
+        return maxx - timeline.position[0] + 5
 
     def test_riple_roll(self):
         self.help_test_insertEndFast()
@@ -205,14 +205,32 @@ class TimelineTest(HelpFunc):
         self.nextb.click()
         self.assertNotEqual(seektime.text, seekbefore, "Not ripled affter adding effect")
 
-    def test_image_video_mix(self):
+    def test_aimage_video_mix(self):
         files = ["1sec_simpsons_trailer.mp4", "flat_colour2_640x480.png",
                  "flat_colour4_1600x1200.jpg", "flat_colour1_640x480.png",
                  "flat_colour3_320x180.png", "flat_colour5_1600x1200.jpg"]
         samples = self.import_media_multiple(files)
+        seektime = self.search_by_text("0:00:00.000", self.pitivi, roleName="text")
+        timeline = self.get_timeline()
+        tpos = timeline.position
 
         #One video, one image
-        for sample in samples:
+        for sample in samples[1:]:
             self.insert_clip(sample)
+            self.insert_clip(samples[0])
 
-        #TODO: do somthing with clips
+        end = self.search_clip_end(30, seektime, timeline)
+        cend = end / 11.139
+        dogtail.rawinput.absoluteMotion(tpos[0] + cend - 2, tpos[1] + 30)
+        registry.generateKeyboardEvent(dogtail.rawinput.keyNameToKeyCode("Shift_L"), None, KEY_PRESS)
+        dogtail.rawinput.press(tpos[0] + cend - 2, tpos[1] + 30)
+        sleep(0.5)
+        dogtail.rawinput.absoluteMotion(tpos[0] + cend - 40, tpos[1] + 30)
+        sleep(0.5)
+        dogtail.rawinput.release(tpos[0] + cend - 40, tpos[1] + 30)
+        registry.generateKeyboardEvent(dogtail.rawinput.keyNameToKeyCode("Shift_L"), None, KEY_RELEASE)
+        self.nextb.click()
+        sleep(2)
+        self.assertNotEqual(seektime.text, "0:00:11.139")
+
+        #TODO: do something more with clips

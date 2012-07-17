@@ -98,10 +98,8 @@ class HelpFunc(BaseDogTail):
         add.child(roleName='text').click()
         add.child(roleName='text').text = filepath
         dogtail.rawinput.pressKey("Enter")
-        sleep(1)
         #Now select them
         code = dogtail.rawinput.keyNameToKeyCode("Control_L")
-        sleep(10)
         registry.generateKeyboardEvent(code, None, KEY_PRESS)
         for f in files:
             sleep(1)
