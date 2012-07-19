@@ -60,7 +60,6 @@ from pitivi.utils.ui import SPACING, CANVAS_SPACING, unpack_cairo_pattern, \
     TYPE_PITIVI_FILESOURCE, VIDEO_EFFECT_TUPLE, Point, \
     AUDIO_EFFECT_TUPLE, EFFECT_TUPLE, FILESOURCE_TUPLE, TYPE_PITIVI_EFFECT, \
     LAYER_CREATION_BLOCK_TIME, LAYER_CONTROL_TUPLE
-
 # FIXME GES Port regression
 # from pitivi.utils.align import AutoAligner
 
@@ -1906,7 +1905,6 @@ class Timeline(gtk.Table, Loggable, Zoomable):
             return
 
         source = self._sources_to_insert.pop()
-        print source
         layer = timeline.get_layers()[0]  # FIXME Get the longest layer
         layer.add_object(source)
 
@@ -1918,8 +1916,6 @@ class Timeline(gtk.Table, Loggable, Zoomable):
     def _trackObjectAddedCb(self, source, trackobj):
         """ After an object has been added to the first track, position it
         correctly and request the next source to be processed. """
-        print source
-        print trackobj
         timeline = self.app.current.timeline
         layer = timeline.get_layers()[0]  # FIXME Get the longest layer
 

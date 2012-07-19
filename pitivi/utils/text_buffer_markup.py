@@ -24,6 +24,7 @@ import xml.sax.saxutils
 class PangoBuffer(gtk.TextBuffer):
     desc_to_attr_table = {
         'family': [pango.AttrFamily, ""],
+        'size': [pango.AttrSize, 14*1024],
         'style': [pango.AttrStyle, pango.STYLE_NORMAL],
         'variant': [pango.AttrVariant, pango.VARIANT_NORMAL],
         'weight': [pango.AttrWeight, pango.WEIGHT_NORMAL],
@@ -37,6 +38,7 @@ class PangoBuffer(gtk.TextBuffer):
         pango.ATTR_VARIANT: 'variant',
         pango.ATTR_STYLE: 'style',
         pango.ATTR_SCALE: 'scale',
+        pango.ATTR_FAMILY: 'family',
         pango.ATTR_STRIKETHROUGH: 'strikethrough',
         pango.ATTR_RISE: 'rise'}
     attval_to_markup = {
@@ -69,8 +71,6 @@ class PangoBuffer(gtk.TextBuffer):
     def __init__(self):
         self.tagdict = {}
         self.tags = {}
-        #self.buf = buf
-        #self.set_text(txt)
         gtk.TextBuffer.__init__(self)
 
     def set_text(self, txt):
@@ -98,19 +98,10 @@ class PangoBuffer(gtk.TextBuffer):
     def get_tags_from_attrs(self, font, lang, attrs):
         tags = []
         if font:
-            font, fontattrs = self.fontdesc_to_attrs(font)
+            fontattrs = self.fontdesc_to_attrs(font)
             fontdesc = font.to_string()
             if fontattrs:
                 attrs.extend(fontattrs)
-            if fontdesc and fontdesc != 'Normal':
-                if not font.to_string() in self.tags:
-                    tag = self.create_tag()
-                    tag.set_property('font-desc', font)
-                    if not tag in self.tagdict:
-                        self.tagdict[tag] = {}
-                    self.tagdict[tag]['font_desc'] = font.to_string()
-                    self.tags[font.to_string()] = tag
-                tags.append(self.tags[font.to_string()])
         if lang:
             if not lang in self.tags:
                 tag = self.create_tag()
@@ -208,6 +199,9 @@ class PangoBuffer(gtk.TextBuffer):
     def tag_to_markup(self, tag):
         stag = "<span"
         for k, v in self.tagdict[tag].items():
+            #family in gtk, face in pango mark language
+            if k == "family":
+                k = "face"
             stag += ' %s="%s"' % (k, v)
         stag += ">"
         return stag, "</span>"
@@ -220,9 +214,7 @@ class PangoBuffer(gtk.TextBuffer):
                 Attr, norm = self.desc_to_attr_table[n]
                 # create an attribute with our current value
                 attrs.append(Attr(getattr(font, 'get_%s' % n)()))
-                # unset our font's value
-                getattr(font, 'set_%s' % n)(norm)
-        return font, attrs
+        return attrs
 
     def pango_color_to_gdk(self, pc):
         return gtk.gdk.Color(pc.red, pc.green, pc.blue)

@@ -97,13 +97,3 @@ class TitleEditor():
                 self.textbuffer.get_text(self.textbuffer.get_start_iter(),
                                          self.textbuffer.get_end_iter()))
             self.textarea.set_buffer(self.pangobuffer)
-
-
-if __name__ == "__main__":
-    window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-    window.connect("delete_event", lambda widget, event, data=None: gtk.main_quit())
-    window.set_default_size(520, 200)
-    window.set_title("Rich Text Editor")
-    window.add(RichTextEditor())
-    window.show_all()
-    gtk.main()
