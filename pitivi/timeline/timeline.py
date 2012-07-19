@@ -1911,7 +1911,6 @@ class Timeline(gtk.Table, Loggable, Zoomable):
             return
 
         source = self._sources_to_insert.pop()
-        print source
         layer = timeline.get_layers()[0]  # FIXME Get the longest layer
         layer.add_object(source)
 
@@ -1923,8 +1922,6 @@ class Timeline(gtk.Table, Loggable, Zoomable):
     def _trackObjectAddedCb(self, source, trackobj):
         """ After an object has been added to the first track, position it
         correctly and request the next source to be processed. """
-        print source
-        print trackobj
         timeline = self.app.current.timeline
         layer = timeline.get_layers()[0]  # FIXME Get the longest layer
 

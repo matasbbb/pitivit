@@ -20,6 +20,7 @@
           </object>
           <packing>
             <property name="expand">False</property>
+            <property name="homogeneous">True</property>
           </packing>
         </child>
         <child>
@@ -34,6 +35,7 @@
           </object>
           <packing>
             <property name="expand">False</property>
+            <property name="homogeneous">True</property>
           </packing>
         </child>
         <child>
@@ -48,6 +50,7 @@
           </object>
           <packing>
             <property name="expand">False</property>
+            <property name="homogeneous">True</property>
           </packing>
         </child>
         <child>
@@ -181,6 +184,7 @@
           </object>
           <packing>
             <property name="expand">False</property>
+            <property name="homogeneous">True</property>
           </packing>
         </child>
       </object>
@@ -194,6 +198,7 @@
       <object class="GtkTextView" id="textview1">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
+        <property name="wrap_mode">word</property>
       </object>
       <packing>
         <property name="expand">True</property>
