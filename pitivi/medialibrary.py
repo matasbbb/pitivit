@@ -468,6 +468,10 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
             ("SelectUnusedSources", None, _("Select Unused Media"),
             None, _("Select clips that have not been used in the project"),
             self._selectUnusedSourcesCb),
+
+            ("InsertTitle", None, _("Insert Title"),
+            None, _("Insert title into timeline and medialibrary"),
+            self._insertTitleCb),
         )
 
         # only available when selection is non-empty
@@ -557,6 +561,9 @@ class MediaLibraryWidget(gtk.VBox, Loggable):
         self.app.gui.timeline_ui.insertEnd(sources)
 
         self._sources_to_insert = self.getSelectedItems()
+
+    def _insertTitleCb(self, unused_action):
+        return
 
     def _disableKeyboardShortcutsCb(self, *unused_args):
         """
