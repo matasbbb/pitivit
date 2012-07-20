@@ -80,6 +80,18 @@ PreferencesDialog.addColorPreference('audioClipBg',
     label=_("Color for audio clips"),
     description=_("The background color for clips in audio tracks."))
 
+GlobalSettings.addConfigOption('titleClipBg',
+    section='user-interface',
+    key='titleclip-background',
+    default=996806336,
+    notify=True)
+
+PreferencesDialog.addColorPreference('titleClipBg',
+    section=_("Appearance"),
+    label=_("Color for title clips"),
+    description=_("The background color for clips in title tracks."))
+
+
 GlobalSettings.addConfigOption('selectedColor',
     section='user-interface',
     key='selected-color',
@@ -496,11 +508,13 @@ class TrackObject(View, goocanvas.Group, Zoomable, Loggable):
         if settings is not None:
             settings.connect("audioClipBgChanged", target)
             settings.connect("videoClipBgChanged", target)
+            settings.connect("titleClipBgChanged", target)
             settings.connect("selectedColorChanged", target)
             settings.connect("clipFontDescChanged", target)
         else:
             self._settings.disconnect_by_func("audioClipBgChanged", target)
             self._settings.disconnect_by_func("videoClipBgChanged", target)
+            self._settings.disconnect_by_func("titleClipBgChanged", target)
             self._settings.disconnect_by_func("selectedColorChanged", target)
             self._settings.disconnect_by_func("clipFontDescChanged", target)
         self._settings = settings
@@ -515,6 +529,7 @@ class TrackObject(View, goocanvas.Group, Zoomable, Loggable):
         if self._settings is not None:
             self._settings.disconnect_by_func("audioClipBgChanged", target)
             self._settings.disconnect_by_func("videoClipBgChanged", target)
+            self._settings.disconnect_by_func("titleClipBgChanged", target)
             self._settings.disconnect_by_func("selectedColorChanged", target)
             self._settings.disconnect_by_func("clipFontDescChanged", target)
         self._settings = None
@@ -661,6 +676,32 @@ class TrackTransition(TrackObject):
     def _changeVideoTransitionCb(self, transition, unused_transition_type):
         self.name.props.text = transition.props.transition_type.value_nick
 
+class TrackTitleSource(TrackObject):
+    """
+    Subclass of TrackObject for titles
+    """
+    def __init__(self, instance, element, track, timeline, utrack):
+        TrackObject.__init__(self, instance, element, track, timeline, utrack)
+        #self.preview = Preview(self.app, element)
+        for thing in (self.bg, self._selec_indic,
+            self.start_handle, self.end_handle, self.namebg, self.name):
+            self.add_child(thing)
+
+    def _getColor(self):
+        return self.settings.titleClipBg
+
+    def _setElement(self, element):
+        if self.element:
+            text = self.element.get_text()
+            _, t, _ = pango.parse_markup(text)
+            #TODO trim text, first line etc
+            self.name.props.text = t
+            twidth, theight = text_size(self.name)
+            self.namewidth = twidth
+            self.nameheight = theight
+            self._update()
+
+
 
 class TrackFileSource(TrackObject):
     """
@@ -751,8 +792,13 @@ class Track(goocanvas.Group, Zoomable, Loggable):
     track = property(getTrack, setTrack, None, "The timeline property")
 
     def _objectAddedCb(self, unused_timeline, track_object):
+        print track_object
         if isinstance(track_object, ges.TrackTransition):
             self._transitionAdded(track_object)
+        elif isinstance(track_object, ges.TrackTitleSource):
+            w = TrackTitleSource(self.app, track_object, self.track, self.timeline, self)
+            self.widgets[track_object] = w
+            self.add_child(w)
         elif isinstance(track_object, ges.TrackSource):
             w = TrackFileSource(self.app, track_object, self.track, self.timeline, self)
             self.widgets[track_object] = w

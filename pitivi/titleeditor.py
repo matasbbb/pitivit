@@ -26,13 +26,15 @@ Shows title editor
 import os
 import gtk
 import pango
-import pango
+import ges
+import gst
 from pitivi.configure import get_ui_dir
 from utils.text_buffer_markup import InteractivePangoBuffer
 
 class TitleEditor():
 
-    def __init__(self):
+    def __init__(self, instance, uimap):
+        self.app = instance
         self.bt = {}
         self._createUI()
         self.textbuffer = gtk.TextBuffer()
@@ -53,7 +55,6 @@ class TitleEditor():
         buttons = ["bold","italic","underline","font","font_fore_color","font_back_color"]
         for button in buttons:
             self.bt[button] = builder.get_object(button)
-        print self.bt
 
     def _backgroundColorButtonCb(self, widget):
         self.textarea.modify_base(self.textarea.get_state(), widget.get_color())
@@ -80,7 +81,6 @@ class TitleEditor():
         ai = a.get_iterator()
         font, lang, attrs = ai.get_font()
         tags = self.pangobuffer.get_tags_from_attrs(font, None, attrs)
-        print tags
         for tag in tags:
             self.pangobuffer.apply_tag_to_selection(tag)
 
@@ -97,3 +97,9 @@ class TitleEditor():
                 self.textbuffer.get_text(self.textbuffer.get_start_iter(),
                                          self.textbuffer.get_end_iter()))
             self.textarea.set_buffer(self.pangobuffer)
+
+    def _insertEndCb(self, unused_button):
+        title = ges.TimelineTitleSource()
+        title.set_text(self.pangobuffer.get_text())
+        title.set_duration(long(gst.SECOND * 5))
+        self.app.gui.timeline_ui.insertEnd([title])

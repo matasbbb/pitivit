@@ -5,6 +5,54 @@
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
+      <object class="GtkInfoBar" id="infobar1">
+        <property name="visible">True</property>
+        <property name="app_paintable">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child internal-child="content_area">
+          <object class="GtkBox" id="infobar-content_area1">
+            <property name="can_focus">False</property>
+            <property name="border_width">8</property>
+            <property name="spacing">16</property>
+            <child>
+              <object class="GtkLabel" id="info_bar_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Select title to edit or </property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <action-widgets>
+          <action-widget response="0">insert</action-widget>
+        </action-widgets>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="infobar-action_area1">
+            <property name="can_focus">False</property>
+            <property name="border_width">5</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">6</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="insert">
+                <property name="label" translatable="yes">Insert at End of Timeline</property>
+                <property name="use_action_appearance">False</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_action_appearance">False</property>
+                <signal name="clicked" handler="_insertEndCb" swapped="no"/>
+              </object>
+            </child>
+          </object>
+        </child>
+        <action-widgets>
+          <action-widget response="0">insert</action-widget>
+        </action-widgets>
+      </object>
+    </child>
+    <child>
       <object class="GtkToolbar" id="toolbar1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
@@ -191,7 +239,7 @@
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">0</property>
+        <property name="position">1</property>
       </packing>
     </child>
     <child>
@@ -203,7 +251,7 @@
       <packing>
         <property name="expand">True</property>
         <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="position">2</property>
       </packing>
     </child>
     <child>
@@ -300,7 +348,7 @@
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">2</property>
+        <property name="position">3</property>
       </packing>
     </child>
     <child>
@@ -391,7 +439,7 @@
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">3</property>
+        <property name="position">4</property>
       </packing>
     </child>
     <child>
@@ -482,7 +530,7 @@
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">4</property>
+        <property name="position">5</property>
       </packing>
     </child>
   </object>

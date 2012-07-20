@@ -407,7 +407,7 @@ class PitiviMainWindow(gtk.Window, Loggable):
         self.context_tabs = BaseTabs(instance)
         self.clipconfig = ClipProperties(instance, self.uimanager)
         self.trans_list = TransitionsListWidget(instance, self.uimanager)
-        self.title_editor = TitleEditor()
+        self.title_editor = TitleEditor(instance, self.uimanager)
         self.context_tabs.append_page(self.clipconfig, gtk.Label(_("Clip configuration")))
         self.context_tabs.append_page(self.trans_list, gtk.Label(_("Transitions")))
         self.context_tabs.append_page(self.title_editor.widget, gtk.Label(_("Title editor")))
