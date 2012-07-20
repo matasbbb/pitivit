@@ -1884,11 +1884,6 @@ class Timeline(gtk.Table, Loggable, Zoomable):
         """
         self.app.action_log.begin("add clip")
 
-        title = ges.TimelineTextOverlay()
-        title.set_text("<b>Test</b><i>test</i>")
-        title.props.duration = gst.SECOND * 2
-        sources.insert(0, title)
-
         # Handle the case of a blank project
         self._ensureLayer()
         self._sources_to_insert = sources
