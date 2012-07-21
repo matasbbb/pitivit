@@ -264,11 +264,13 @@ class PangoBuffer(gtk.TextBuffer):
         selection = self.get_selection()
         if selection:
             self.apply_tag(tag, *selection)
+        self.emit("changed")
 
     def remove_tag_from_selection(self, tag):
         selection = self.get_selection()
         if selection:
             self.remove_tag(tag, *selection)
+        self.emit("changed")
 
     def remove_all_tags(self):
         selection = self.get_selection()
