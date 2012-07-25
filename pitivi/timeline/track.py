@@ -595,11 +595,16 @@ class TrackObject(View, goocanvas.Group, Zoomable, Loggable):
             if isinstance(self.element, ges.TrackTransition):
                 if isinstance(self.element, ges.TrackVideoTransition):
                     self.app.gui.trans_list.activate(self.element)
+            elif isinstance(self.element, ges.TrackTitleSource):
+                self.app.gui.switchContextTab("title editor")
+                self.app.gui.title_editor.set_source(self.element.get_timeline_object())
             else:
                 self.app.gui.trans_list.deactivate()
                 self.app.gui.switchContextTab()
             self._selec_indic.props.visibility = goocanvas.ITEM_VISIBLE
         else:
+            if isinstance(self.element, ges.TrackTitleSource):
+                self.app.gui.title_editor.set_source(None)
             self._selec_indic.props.visibility = goocanvas.ITEM_INVISIBLE
 
     def _update(self):
@@ -676,6 +681,7 @@ class TrackTransition(TrackObject):
     def _changeVideoTransitionCb(self, transition, unused_transition_type):
         self.name.props.text = transition.props.transition_type.value_nick
 
+
 class TrackTitleSource(TrackObject):
     """
     Subclass of TrackObject for titles
@@ -700,7 +706,6 @@ class TrackTitleSource(TrackObject):
             self.namewidth = twidth
             self.nameheight = theight
             self._update()
-
 
 
 class TrackFileSource(TrackObject):

@@ -31,15 +31,13 @@ import gst
 from pitivi.configure import get_ui_dir, get_pixmap_dir
 from pitivi.utils.loggable import Loggable
 from pitivi.utils.signal import SignalGroup, Signallable
-
 from utils.text_buffer_markup import InteractivePangoBuffer
 
-INVISIBLE = gtk.gdk.pixbuf_new_from_file(os.path.join(get_pixmap_dir(),
-    "invisible.png"))
+INVISIBLE = gtk.gdk.pixbuf_new_from_file(os.path.join(get_pixmap_dir(), "invisible.png"))
+
 
 class TitleEditor(Signallable, Loggable):
-    __signals__ = {
-        }
+    __signals__ = {}
 
     def __init__(self, instance, uimap):
         Loggable.__init__(self)
@@ -76,10 +74,18 @@ class TitleEditor(Signallable, Loggable):
         self.info_bar_drag = builder.get_object("infobar2")
         self.drag_item = builder.get_object("drag_item")
 
-        buttons = ["bold","italic","underline","font","font_fore_color","font_back_color"]
+        buttons = ["bold", "italic", "underline", "font", "font_fore_color", "font_back_color"]
         for button in buttons:
             self.bt[button] = builder.get_object(button)
         self.set_sensitive(False)
+
+    def _focusedTextView(self, widget, notused_event):
+        self.app.gui.timeline_ui.playhead_actions.set_sensitive(False)
+        self.app.gui.timeline_ui.selection_actions.set_sensitive(False)
+
+    def _unfocusedTextView(self, widget, notused_event):
+        self.app.gui.timeline_ui.playhead_actions.set_sensitive(True)
+        self.app.gui.timeline_ui.selection_actions.set_sensitive(True)
 
     def _backgroundColorButtonCb(self, widget):
         self.textarea.modify_base(self.textarea.get_state(), widget.get_color())
@@ -97,7 +103,6 @@ class TitleEditor(Signallable, Loggable):
         font, lang, attrs = ai.get_font()
         tags = self.pangobuffer.get_tags_from_attrs(None, None, attrs)
         self.pangobuffer.apply_tag_to_selection(tags[0])
-
 
     def _fontButtonCb(self, widget):
         font_desc = widget.get_font_name().split(" ")
@@ -149,11 +154,11 @@ class TitleEditor(Signallable, Loggable):
 
     def _reset(self):
         #TODO: reset not only text
-        if self.markup_button.get_active():
-            self.markup_button.set_active(False)
-            self.pangobuffer.set_text("")
-            self.textbuffer.set_text("")
-            self._markupToggleCb(self.markup_button)
+        self.markup_button.set_active(False)
+        self.pangobuffer.set_text("")
+        self.textbuffer.set_text("")
+        #Set right buffer
+        self._markupToggleCb(self.markup_button)
 
     def set_source(self, source):
         self.source = None
