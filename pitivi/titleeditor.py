@@ -33,7 +33,6 @@ from pitivi.configure import get_ui_dir, get_pixmap_dir
 from pitivi.utils.loggable import Loggable
 from pitivi.utils.signal import SignalGroup, Signallable
 from utils.text_buffer_markup import InteractivePangoBuffer
-
 INVISIBLE = gtk.gdk.pixbuf_new_from_file(os.path.join(get_pixmap_dir(), "invisible.png"))
 
 
@@ -45,14 +44,15 @@ class TitleEditor(Signallable, Loggable):
         Signallable.__init__(self)
         self.app = instance
         self.bt = {}
+        self.settings = {}
         self._createUI()
         self.textbuffer = gtk.TextBuffer()
         self.pangobuffer = InteractivePangoBuffer()
         self.textarea.set_buffer(self.pangobuffer)
 
         #Conect updates
-        self.textbuffer.connect("changed", self._updateSource)
-        self.pangobuffer.connect("changed", self._updateSource)
+        self.textbuffer.connect("changed", self._updateSourceText)
+        self.pangobuffer.connect("changed", self._updateSourceText)
 
         #Connect drag, no drag for now
         #self.drag_item.drag_source_set(gtk.gdk.BUTTON1_MASK, [], gtk.gdk.ACTION_COPY)
@@ -74,10 +74,14 @@ class TitleEditor(Signallable, Loggable):
         self.info_bar_create = builder.get_object("infobar1")
         self.info_bar_drag = builder.get_object("infobar2")
         self.drag_item = builder.get_object("drag_item")
-
         buttons = ["bold", "italic", "underline", "font", "font_fore_color", "font_back_color"]
         for button in buttons:
             self.bt[button] = builder.get_object(button)
+        #FIXME Find workaround for GtkComboBoxText
+        #settings = ["valignment","halignment","xpos","ypos"]
+        settings = ["xpos", "ypos"]
+        for setting in settings:
+            self.settings[setting] = builder.get_object(setting)
         self.set_sensitive(False)
 
     def _focusedTextView(self, widget, notused_event):
@@ -142,9 +146,11 @@ class TitleEditor(Signallable, Loggable):
         #TODO: update not only text
         if self.source is not None:
             self.pangobuffer.set_text(self.source.get_text())
+            for name, gtk_obj in self.settings.items():
+                if (isinstance(gtk_obj, gtk.SpinButton)):
+                    gtk_obj.set_text(str(getattr(self.source.props, name)))
 
-    def _updateSource(self, unused_object):
-        #TODO: update not only text
+    def _updateSourceText(self, updated_obj):
         if self.source is not None:
             if self.markup_button.get_active():
                 text = self.textbuffer.get_text(self.textbuffer.get_start_iter(),
@@ -152,6 +158,18 @@ class TitleEditor(Signallable, Loggable):
             else:
                 text = self.pangobuffer.get_text()
             self.source.set_text(text)
+
+    def _updateSource(self, updated_obj):
+        if self.source is not None:
+            for name, obj in self.settings.items():
+                if obj == updated_obj:
+                    self.source.set_property(name, obj.get_value())
+                    #FIXME should update gtk objects
+                    if name == "xpos":
+                       self.source.set_halignment("position")
+                    if name == "ypos":
+                       self.source.set_valignment("position")
+                    return
 
     def _reset(self):
         #TODO: reset not only text

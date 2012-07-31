@@ -371,7 +371,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBoxText" id="valign">
+                              <object class="GtkComboBoxText" id="valignment">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="active">1</property>
@@ -405,7 +405,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkComboBoxText" id="halign">
+                              <object class="GtkComboBoxText" id="halignment">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="entry_text_column">0</property>
@@ -471,7 +471,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSpinButton" id="xpos_spinbtn">
+                              <object class="GtkSpinButton" id="xpos">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="invisible_char">•</property>
@@ -479,7 +479,8 @@
                                 <property name="adjustment">position_x_adj</property>
                                 <property name="digits">2</property>
                                 <property name="numeric">True</property>
-                              </object>
+                                <signal name="value-changed" handler="_updateSource" swapped="no"/>
+			      </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">True</property>
@@ -499,7 +500,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSpinButton" id="ypos_spinbtn">
+                              <object class="GtkSpinButton" id="ypos">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="invisible_char">•</property>
@@ -507,6 +508,7 @@
                                 <property name="adjustment">position_y_adj</property>
                                 <property name="digits">2</property>
                                 <property name="numeric">True</property>
+                                <signal name="value-changed" handler="_updateSource" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
