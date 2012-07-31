@@ -28,6 +28,7 @@ import gtk
 import pango
 import ges
 import gst
+from utils.timeline import SELECT
 from pitivi.configure import get_ui_dir, get_pixmap_dir
 from pitivi.utils.loggable import Loggable
 from pitivi.utils.signal import SignalGroup, Signallable
@@ -183,6 +184,7 @@ class TitleEditor(Signallable, Loggable):
     def _insertEndCb(self, unused_button):
         self.info_bar_drag.hide()
         self.app.gui.timeline_ui.insertEnd([self.source])
+        self.app.gui.timeline_ui.timeline.selection.setToObj(self.source, SELECT)
 
     def _dndDragBeginCb(self, view, context):
         self.info("Title drag begin")

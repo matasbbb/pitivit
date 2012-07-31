@@ -797,14 +797,13 @@ class Track(goocanvas.Group, Zoomable, Loggable):
     track = property(getTrack, setTrack, None, "The timeline property")
 
     def _objectAddedCb(self, unused_timeline, track_object):
-        print track_object
         if isinstance(track_object, ges.TrackTransition):
             self._transitionAdded(track_object)
         elif isinstance(track_object, ges.TrackTitleSource):
             w = TrackTitleSource(self.app, track_object, self.track, self.timeline, self)
             self.widgets[track_object] = w
             self.add_child(w)
-        elif isinstance(track_object, ges.TrackSource):
+        elif isinstance(track_object, ges.TrackFileSource):
             w = TrackFileSource(self.app, track_object, self.track, self.timeline, self)
             self.widgets[track_object] = w
             self.add_child(w, -1)
