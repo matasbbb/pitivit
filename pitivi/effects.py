@@ -506,7 +506,7 @@ class EffectListWidget(gtk.VBox, Loggable):
         path = paths[0]
         pixbuf = model.get_value(model.get_iter(path), COL_ICON)
         if pixbuf:
-            context.set_icon_pixbuf(pixbuf, 0, 0)
+            gtk.drag_set_icon_pixbuf(context, pixbuf, 0, 0)
 
     def _rowUnderMouseSelected(self, view, event):
         result = view.get_path_at_pos(int(event.x), int(event.y))
@@ -562,7 +562,7 @@ class EffectListWidget(gtk.VBox, Loggable):
         if view.drag_check_threshold(self._dragX, self._dragY,
             int(event.x), int(event.y)):
             context = view.drag_begin(
-                self._getTargetEntries(),
+                gtk.TargetList.new(self._getTargetEntries()),
                 gtk.gdk.ACTION_COPY,
                 self._dragButton,
                 event)
@@ -594,7 +594,7 @@ class EffectListWidget(gtk.VBox, Loggable):
             return
 
         selection.set(selection.target, 8, factory)
-        context.set_icon_pixbuf(INVISIBLE, 0, 0)
+        gtk.drag_set_icon_pixbuf(context, INVISIBLE, 0, 0)
 
     def _effectTypeChangedCb(self, combobox):
         self.modelFilter.refilter()
