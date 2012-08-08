@@ -530,7 +530,7 @@ class Project(Signallable, Loggable):
         self.timeline.selection = Selection()
 
         self.pipeline = Pipeline()
-        self.pipeline.add_timeline(self.timeline)
+        self.pipeline.pipe.add_timeline(self.timeline)
         self.seeker = Seeker()
 
         self.settings = MultimediaSettings()
