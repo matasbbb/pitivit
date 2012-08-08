@@ -164,7 +164,8 @@ class ProjectManager(Signallable, Loggable):
 
         self.emit("new-project-created", self.current)
 
-        self.timeline = Timeline()
+        self.timeline = ges.timeline_new_audio_video()
+        self.timeline.selection = Selection()
         self.formatter = ges.PitiviFormatter()
         self.formatter.connect("source-moved", self._formatterMissingURICb)
         self.formatter.connect("loaded", self._projectLoadedCb)
@@ -525,7 +526,8 @@ class Project(Signallable, Loggable):
         self.medialibrary = MediaLibrary()
 
         self._dirty = False
-        self.timeline = Timeline()
+        self.timeline = ges.timeline_new_audio_video()
+        self.timeline.selection = Selection()
 
         self.pipeline = Pipeline()
         self.pipeline.add_timeline(self.timeline)
