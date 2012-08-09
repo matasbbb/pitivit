@@ -691,7 +691,7 @@ class TrackTitleSource(TrackObject):
         #self.preview = Preview(self.app, element)
         for thing in (self.bg, self._selec_indic,
             self.start_handle, self.end_handle, self.namebg, self.name):
-            self.add_child(thing)
+            self.add_child(thing, -1)
 
     def _getColor(self):
         return self.settings.titleClipBg
@@ -699,7 +699,7 @@ class TrackTitleSource(TrackObject):
     def _setElement(self, element):
         if self.element:
             text = self.element.get_text()
-            _, t, _ = pango.parse_markup(text)
+            _, _, t, _ = pango.parse_markup(text, -1, u'\x00')
             #TODO trim text, first line etc
             self.name.props.text = t
             twidth, theight = text_size(self.name)
@@ -802,7 +802,7 @@ class Track(goocanvas.Group, Zoomable, Loggable):
         elif isinstance(track_object, ges.TrackTitleSource):
             w = TrackTitleSource(self.app, track_object, self.track, self.timeline, self)
             self.widgets[track_object] = w
-            self.add_child(w)
+            self.add_child(w, -1)
         elif isinstance(track_object, ges.TrackFileSource):
             w = TrackFileSource(self.app, track_object, self.track, self.timeline, self)
             self.widgets[track_object] = w

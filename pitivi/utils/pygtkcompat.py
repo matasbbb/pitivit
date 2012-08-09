@@ -78,7 +78,6 @@ def _install_enums(module, dest=None, strip=''):
         except TypeError:
             continue
 
-
 def enable():
     # gobject
     from gi.repository import GLib
@@ -430,6 +429,87 @@ def enable_gtk(version='2.0'):
             value = getattr(Gdk, name)
             setattr(keysyms, target, value)
 
+    #Pango.AttrList
+    class AttrIterator():
+        def __init__ (self, attributes=[]):
+            print attributes
+            self.attributes = attributes
+            for i in attributes:
+                print "_start" + str(i.start_index) +" " + str(i.end_index)
+            self.attribute_stack = []
+            self.start_index = 0
+            self.end_index = 0
+            if self.next():
+                self.end_index = 2**32 -1
+
+        def next(self):
+            if len(self.attributes) == 0:
+                print "No next"
+                return False
+            self.start_index = self.end_index
+            self.end_index = 2**32 - 1
+
+            tmp_list = self.attribute_stack
+            while len(tmp_list) > 0:
+                attr = tmp_list[-1]
+                if nextattr.end_index == self.start_index:
+                    self.attribute_stack.remove(tmp_list[-1])
+                    tmp_list = []
+                else:
+                    self.end_index = min(self.end.index, attr.end_index)
+                tmp_list = tmplist[:-1]
+            while len(self.attributes) != 0 and \
+                  self.attributes[0].start_index == self.start_index:
+                if self.attributes[0].end_index > self.start_index:
+                    self.attribute_stack.append(self.attributes[0])
+                    self.end_index = min(self.end_index, self.attributes[0].end_index)
+                self.attributes = self.attributes[1:]
+            if len(self.attributes) > 0:
+                self.end_index = min(self.end_index, self.attrbutes[0].start_index)
+            print "start" + str(self.start_index) + " " + str(self.end_index)
+            return True
+
+        def range(self):
+            return (self.start_index, self.end_index)
+
+        def get_font(self):
+            print self.attribute_stack
+            return (Pango.FontDescription(), None, self.attribute_stack)
+
+
+    def get_iterator(self):
+        tmplist = []
+        def fil(val, data):
+            tmplist.append(val)
+            return False
+        self.filter(fil, None)
+        return AttrIterator(tmplist)
+
+
+    setattr(Pango.AttrList, 'get_iterator', get_iterator)
+    class AttrFamily(Pango.Attribute):
+       pass
+    Pango.AttrFamily = AttrFamily
+
+    class AttrStyle(Pango.Attribute):
+       pass
+    Pango.AttrStyle = AttrStyle
+
+    class AttrVariant(Pango.Attribute):
+       pass
+    Pango.AttrVariant = AttrVariant
+
+    class AttrWeight(Pango.Attribute):
+       pass
+    Pango.AttrWeight = AttrWeight
+
+    class AttrVariant(Pango.Attribute):
+       pass
+    Pango.AttrVariant = AttrVariant
+
+    class AttrStretch(Pango.Attribute):
+       pass
+    Pango.AttrStretch = AttrStretch
 
 def enable_vte():
     gi.require_version('Vte', '0.0')

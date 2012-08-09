@@ -130,7 +130,7 @@ class TitleEditor(Signallable, Loggable):
                 self.bt[name].set_sensitive(True)
             self.pangobuffer.set_text(
                 self.textbuffer.get_text(self.textbuffer.get_start_iter(),
-                                         self.textbuffer.get_end_iter()))
+                                         self.textbuffer.get_end_iter(), True))
             self.textarea.set_buffer(self.pangobuffer)
 
     def set_sensitive(self, sensitive):
@@ -154,7 +154,8 @@ class TitleEditor(Signallable, Loggable):
         if self.source is not None:
             if self.markup_button.get_active():
                 text = self.textbuffer.get_text(self.textbuffer.get_start_iter(),
-                                                self.textbuffer.get_end_iter())
+                                                self.textbuffer.get_end_iter(),
+                                                True)
             else:
                 text = self.pangobuffer.get_text()
             self.source.set_text(text)
