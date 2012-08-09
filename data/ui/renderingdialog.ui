@@ -103,7 +103,7 @@
             </child>
             <child>
               <object class="GtkButton" id="render_button">
-                <property name="label" translatable="yes">Render</property>
+                <property name="label">pitivi-render</property>
                 <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -227,7 +227,8 @@
                     <property name="can_focus">False</property>
                     <property name="show_arrow">False</property>
                     <child>
-                      <object class="GtkToolButton" id="add_render_preset_button">
+                      <object class="GtkButton" id="add_render_preset_button">
+                        <property name="label">gtk-add</property>
                         <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
@@ -243,7 +244,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkToolButton" id="remove_render_preset_button">
+                      <object class="GtkButton" id="remove_render_preset_button">
+                        <property name="label">gtk-remove</property>
                         <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
@@ -260,7 +262,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkToolButton" id="save_render_preset_button">
+                      <object class="GtkButton" id="save_render_preset_button">
+                        <property name="label">gtk-save</property>
                         <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
