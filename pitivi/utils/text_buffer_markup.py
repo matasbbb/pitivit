@@ -51,6 +51,7 @@ class PangoBuffer(gtk.TextBuffer):
         pango.ATTR_STYLE: gi.repository.Pango.AttrInt,
         pango.ATTR_SCALE: gi.repository.Pango.AttrFloat,
         pango.ATTR_FAMILY: gi.repository.Pango.AttrString,
+        pango.ATTR_FONT_DESC: gi.repository.Pango.AttrFontDesc,
         pango.ATTR_STRIKETHROUGH: gi.repository.Pango.AttrInt,
         pango.ATTR_BACKGROUND: gi.repository.Pango.AttrColor,
         pango.ATTR_FOREGROUND: gi.repository.Pango.AttrColor,
@@ -126,8 +127,14 @@ class PangoBuffer(gtk.TextBuffer):
             for a in attrs:
                 #FIXME remove on pango fix
                 type_ = a.klass.type
+                klass = a.klass
+                start_index = a.start_index
+                end_index = a.end_index
                 a.__class__ = self.pango_type_table[type_]
                 a.type = type_
+                a.start_index = start_index
+                a.end_index = end_index
+                a.klass = klass
                 if a.type == pango.ATTR_FOREGROUND:
                     gdkcolor = self.pango_color_to_gdk(a.color)
                     key = 'foreground%s' % self.color_to_hex(gdkcolor)

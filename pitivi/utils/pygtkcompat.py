@@ -452,12 +452,12 @@ def enable_gtk(version='2.0'):
             tmp_list = self.attribute_stack
             while len(tmp_list) > 0:
                 attr = tmp_list[-1]
-                if nextattr.end_index == self.start_index:
+                if attr.end_index == self.start_index:
                     self.attribute_stack.remove(tmp_list[-1])
                     tmp_list = []
                 else:
-                    self.end_index = min(self.end.index, attr.end_index)
-                tmp_list = tmplist[:-1]
+                    self.end_index = min(self.end_index, attr.end_index)
+                tmp_list = tmp_list[:-1]
             while len(self.attributes) != 0 and \
                   self.attributes[0].start_index == self.start_index:
                 if self.attributes[0].end_index > self.start_index:
@@ -465,7 +465,7 @@ def enable_gtk(version='2.0'):
                     self.end_index = min(self.end_index, self.attributes[0].end_index)
                 self.attributes = self.attributes[1:]
             if len(self.attributes) > 0:
-                self.end_index = min(self.end_index, self.attrbutes[0].start_index)
+                self.end_index = min(self.end_index, self.attributes[0].start_index)
             print "start" + str(self.start_index) + " " + str(self.end_index)
             return True
 
@@ -473,8 +473,15 @@ def enable_gtk(version='2.0'):
             return (self.start_index, self.end_index)
 
         def get_font(self):
-            print self.attribute_stack
-            return (Pango.FontDescription(), None, self.attribute_stack)
+            tmp_list1 = self.attribute_stack
+            fontdesc = Pango.FontDescription()
+            for attr in self.attribute_stack:
+                if attr.klass.type == Pango.ATTR_FONT_DESC:
+                    tmp_list1.remove(attr)
+                    attr.__class__ = gi.repository.Pango.AttrFontDesc
+                    fontdesc = attr.desc
+            return (fontdesc, None, self.attribute_stack)
+
 
 
     def get_iterator(self):

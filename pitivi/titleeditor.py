@@ -94,16 +94,24 @@ class TitleEditor(Signallable, Loggable):
 
     def _backgroundColorButtonCb(self, widget):
         self.textarea.modify_base(self.textarea.get_state(), widget.get_color())
+        color = widget.get_color()
+        color_int = 0
+        color_int += color.red   / 256 * 256**0
+        color_int += color.green / 256 * 256**1
+        color_int += color.blue  / 256 * 256**2
+        color_int += widget.get_alpha() / 256 * 256**3
+        self.source.set_background(color_int)
+
 
     def _frontTextColorButtonCb(self, widget):
-        a, t, s = pango.parse_markup("<span color='" + widget.get_color().to_string() + "'>color</span>", u'\x00')
+        suc, a, t, s = pango.parse_markup("<span color='" + widget.get_color().to_string() + "'>color</span>", -1, u'\x00')
         ai = a.get_iterator()
         font, lang, attrs = ai.get_font()
         tags = self.pangobuffer.get_tags_from_attrs(None, None, attrs)
         self.pangobuffer.apply_tag_to_selection(tags[0])
 
     def _backTextColorButtonCb(self, widget):
-        a, t, s = pango.parse_markup("<span background='" + widget.get_color().to_string() + "'>color</span>", u'\x00')
+        suc, a, t, s = pango.parse_markup("<span background='" + widget.get_color().to_string() + "'>color</span>", -1, u'\x00')
         ai = a.get_iterator()
         font, lang, attrs = ai.get_font()
         tags = self.pangobuffer.get_tags_from_attrs(None, None, attrs)
@@ -111,8 +119,10 @@ class TitleEditor(Signallable, Loggable):
 
     def _fontButtonCb(self, widget):
         font_desc = widget.get_font_name().split(" ")
-        text = "<span font_desc='" + widget.get_font_name() + "'>text</span>"
-        a, t, s = pango.parse_markup(text, u'\x00')
+        font_face = " ".join(font_desc[:-1])
+        font_size = str(int(font_desc[-1]) * 1024)
+        text = "<span face='" + font_face + "'><span size='" + font_size + "'>text</span></span>"
+        suc, a, t, s = pango.parse_markup(text, -1, u'\x00')
         ai = a.get_iterator()
         font, lang, attrs = ai.get_font()
         tags = self.pangobuffer.get_tags_from_attrs(font, None, attrs)
