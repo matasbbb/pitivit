@@ -74,14 +74,16 @@ class TitleEditor(Signallable, Loggable):
         self.info_bar_create = builder.get_object("infobar1")
         self.info_bar_drag = builder.get_object("infobar2")
         self.drag_item = builder.get_object("drag_item")
-        buttons = ["bold", "italic", "underline", "font", "font_fore_color", "font_back_color"]
+        buttons = ["bold", "italic", "underline", "font", "font_fore_color", "font_back_color", "back_color"]
         for button in buttons:
             self.bt[button] = builder.get_object(button)
-        #FIXME Find workaround for GtkComboBoxText
-        #settings = ["valignment","halignment","xpos","ypos"]
-        settings = ["xpos", "ypos"]
+        settings = ["valignment", "halignment", "xpos", "ypos"]
         for setting in settings:
             self.settings[setting] = builder.get_object(setting)
+        for align in ["Position", "Top", "Center", "Bottom", "Baseline"]:
+            self.settings["valignment"].append(align.lower(), align)
+        for align in ["Position", "Left", "Center", "Bottom"]:
+            self.settings["halignment"].append(align.lower(), align)
         self.set_sensitive(False)
 
     def _focusedTextView(self, widget, notused_event):
@@ -94,14 +96,14 @@ class TitleEditor(Signallable, Loggable):
 
     def _backgroundColorButtonCb(self, widget):
         self.textarea.modify_base(self.textarea.get_state(), widget.get_color())
-        color = widget.get_color()
+        color = widget.get_rgba()
         color_int = 0
-        color_int += color.red   / 256 * 256**0
-        color_int += color.green / 256 * 256**1
-        color_int += color.blue  / 256 * 256**2
-        color_int += widget.get_alpha() / 256 * 256**3
+        color_int += int(color.red   * 255) * 256**0
+        color_int += int(color.green * 255) * 256**1
+        color_int += int(color.blue  * 255) * 256**2
+        color_int += int(color.alpha * 255) * 256**3
+        self.debug("Setting title background color to %s", hex(color_int))
         self.source.set_background(color_int)
-
 
     def _frontTextColorButtonCb(self, widget):
         suc, a, t, s = pango.parse_markup("<span color='" + widget.get_color().to_string() + "'>color</span>", -1, u'\x00')
@@ -153,12 +155,18 @@ class TitleEditor(Signallable, Loggable):
             self.editing_box.set_sensitive(False)
 
     def _updateFromSource(self):
-        #TODO: update not only text
         if self.source is not None:
             self.pangobuffer.set_text(self.source.get_text())
-            for name, gtk_obj in self.settings.items():
-                if (isinstance(gtk_obj, gtk.SpinButton)):
-                    gtk_obj.set_text(str(getattr(self.source.props, name)))
+            self.settings['xpos'].set_value(self.source.props.xpos)
+            self.settings['ypos'].set_value(self.source.props.ypos)
+            self.settings['valignment'].set_active_id(self.source.props.valignment.value_name)
+            self.settings['halignment'].set_active_id(self.source.props.halignment.value_name)
+            color = self.source.props.background
+            print color
+            color = gtk.gdk.RGBA(color % 256 / 255., color / 256 % 256 / 255., color /256**2 % 256 / 255., color /256**3 % 256 / 255.)
+            print color
+            self.bt["back_color"].set_rgba(color)
+
 
     def _updateSourceText(self, updated_obj):
         if self.source is not None:
@@ -174,12 +182,16 @@ class TitleEditor(Signallable, Loggable):
         if self.source is not None:
             for name, obj in self.settings.items():
                 if obj == updated_obj:
-                    self.source.set_property(name, obj.get_value())
-                    #FIXME should update gtk objects
+                    if name == "valignment":
+                       self.source.set_property(name, getattr(ges.TextVAlign, obj.get_active_id().upper()))
+                    if name == "halignment":
+                       self.source.set_property(name, getattr(ges.TextHAlign, obj.get_active_id().upper()))
                     if name == "xpos":
-                       self.source.set_halignment("position")
+                       self.settings["halignment"].set_active_id("position")
+                       self.source.set_property(name, obj.get_value())
                     if name == "ypos":
-                       self.source.set_valignment("position")
+                       self.settings["valignment"].set_active_id("position")
+                       self.source.set_property(name, obj.get_value())
                     return
 
     def _reset(self):
@@ -191,6 +203,7 @@ class TitleEditor(Signallable, Loggable):
         self._markupToggleCb(self.markup_button)
 
     def set_source(self, source):
+        self.debug("Source set to %s", str(source))
         self.source = None
         self._reset()
         if source is None:
