@@ -82,7 +82,7 @@ class TitleEditor(Signallable, Loggable):
             self.settings[setting] = builder.get_object(setting)
         for align in ["Position", "Top", "Center", "Bottom", "Baseline"]:
             self.settings["valignment"].append(align.lower(), align)
-        for align in ["Position", "Left", "Center", "Bottom"]:
+        for align in ["Position", "Left", "Center", "Right"]:
             self.settings["halignment"].append(align.lower(), align)
         self.set_sensitive(False)
 
@@ -98,9 +98,9 @@ class TitleEditor(Signallable, Loggable):
         self.textarea.modify_base(self.textarea.get_state(), widget.get_color())
         color = widget.get_rgba()
         color_int = 0
-        color_int += int(color.red   * 255) * 256**0
+        color_int += int(color.red   * 255) * 256**2
         color_int += int(color.green * 255) * 256**1
-        color_int += int(color.blue  * 255) * 256**2
+        color_int += int(color.blue  * 255) * 256**0
         color_int += int(color.alpha * 255) * 256**3
         self.debug("Setting title background color to %s", hex(color_int))
         self.source.set_background(color_int)
@@ -156,15 +156,18 @@ class TitleEditor(Signallable, Loggable):
 
     def _updateFromSource(self):
         if self.source is not None:
+            self.log("Title text set to %s", self.source.get_text())
             self.pangobuffer.set_text(self.source.get_text())
+            self.textbuffer.set_text(self.source.get_text())
             self.settings['xpos'].set_value(self.source.props.xpos)
             self.settings['ypos'].set_value(self.source.props.ypos)
             self.settings['valignment'].set_active_id(self.source.props.valignment.value_name)
             self.settings['halignment'].set_active_id(self.source.props.halignment.value_name)
             color = self.source.props.background
-            print color
-            color = gtk.gdk.RGBA(color % 256 / 255., color / 256 % 256 / 255., color /256**2 % 256 / 255., color /256**3 % 256 / 255.)
-            print color
+            color = gtk.gdk.RGBA(color / 256**2 % 256 / 255.,
+                                 color / 256**1 % 256 / 255.,
+                                 color / 256**0 % 256 / 255.,
+                                 color / 256**3 % 256 / 255.)
             self.bt["back_color"].set_rgba(color)
 
 
@@ -176,6 +179,7 @@ class TitleEditor(Signallable, Loggable):
                                                 True)
             else:
                 text = self.pangobuffer.get_text()
+            self.log("Source text updated to %s", text)
             self.source.set_text(text)
 
     def _updateSource(self, updated_obj):
