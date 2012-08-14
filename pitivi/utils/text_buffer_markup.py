@@ -21,6 +21,7 @@ import gtk
 import xml.sax.saxutils
 
 
+import gi
 class PangoBuffer(gtk.TextBuffer):
     desc_to_attr_table = {
         'family': [pango.AttrFamily, ""],
@@ -41,6 +42,21 @@ class PangoBuffer(gtk.TextBuffer):
         pango.ATTR_FAMILY: 'family',
         pango.ATTR_STRIKETHROUGH: 'strikethrough',
         pango.ATTR_RISE: 'rise'}
+    pango_type_table = {
+        pango.ATTR_SIZE: gi.repository.Pango.AttrInt,
+        pango.ATTR_WEIGHT: gi.repository.Pango.AttrInt,
+        pango.ATTR_UNDERLINE: gi.repository.Pango.AttrInt,
+        pango.ATTR_STRETCH: gi.repository.Pango.AttrInt,
+        pango.ATTR_VARIANT: gi.repository.Pango.AttrInt,
+        pango.ATTR_STYLE: gi.repository.Pango.AttrInt,
+        pango.ATTR_SCALE: gi.repository.Pango.AttrFloat,
+        pango.ATTR_FAMILY: gi.repository.Pango.AttrString,
+        pango.ATTR_FONT_DESC: gi.repository.Pango.AttrFontDesc,
+        pango.ATTR_STRIKETHROUGH: gi.repository.Pango.AttrInt,
+        pango.ATTR_BACKGROUND: gi.repository.Pango.AttrColor,
+        pango.ATTR_FOREGROUND: gi.repository.Pango.AttrColor,
+        pango.ATTR_RISE: gi.repository.Pango.AttrInt}
+
     attval_to_markup = {
         'underline': {pango.UNDERLINE_SINGLE: 'single',
                       pango.UNDERLINE_DOUBLE: 'double',
@@ -77,7 +93,9 @@ class PangoBuffer(gtk.TextBuffer):
         gtk.TextBuffer.set_text(self, "")
         suc, self.parsed, self.txt, self.separator = pango.parse_markup(txt, -1, u'\x00')
         if not suc:
+            oldtxt = txt
             txt = xml.sax.saxutils.escape(txt)
+            self.warn("Marked text is not correct. Escape %s to %s", oldtxt, txt)
             suc, self.parsed, self.txt, self.separator = pango.parse_markup(txt, -1, u'\x00')
         self.attrIter = self.parsed.get_iterator()
         self.add_iter_to_buffer()
@@ -85,14 +103,14 @@ class PangoBuffer(gtk.TextBuffer):
             self.add_iter_to_buffer()
 
     def add_iter_to_buffer(self):
-        range = self.attrIter.range()
+        it_range = self.attrIter.range()
         font, lang, attrs = self.attrIter.get_font()
         tags = self.get_tags_from_attrs(font, lang, attrs)
-        text = self.txt[range[0]:range[1]]
+        text = self.txt[it_range[0]:it_range[1]]
         if tags:
             self.insert_with_tags(self.get_end_iter(), text, *tags)
         else:
-            self.insert(self.get_end_iter(), text)
+            self.insert_with_tags(self.get_end_iter(), text, *tags)
 
     def get_tags_from_attrs(self, font, lang, attrs):
         tags = []
@@ -109,6 +127,16 @@ class PangoBuffer(gtk.TextBuffer):
             tags.append(self.tags[lang])
         if attrs:
             for a in attrs:
+                #FIXME remove on pango fix
+                type_ = a.klass.type
+                klass = a.klass
+                start_index = a.start_index
+                end_index = a.end_index
+                a.__class__ = self.pango_type_table[type_]
+                a.type = type_
+                a.start_index = start_index
+                a.end_index = end_index
+                a.klass = klass
                 if a.type == pango.ATTR_FOREGROUND:
                     gdkcolor = self.pango_color_to_gdk(a.color)
                     key = 'foreground%s' % self.color_to_hex(gdkcolor)
@@ -158,6 +186,71 @@ class PangoBuffer(gtk.TextBuffer):
                     tagdict[tag] = [(pos, pos)]
         return tagdict
 
+    def split(self, interval, split_interval):
+        #We want as less intervals as posible
+        # interval represented []
+        # split interval represented {}
+        if interval == split_interval:
+            #[{   }]
+            return [interval]
+        if interval[1] < split_interval[0] or split_interval[1] < interval[0]:
+            #[ ] { }
+            return [interval]
+
+        if interval[0] == split_interval[0]:
+            #{[
+            if interval[1] < split_interval[1]:
+                #{[  ]   }
+                return [interval]
+            else:
+                #{[  }   ] -> {[  ]}[  ]
+                return [(interval[0], split_interval[1]),
+                        (split_interval[1] + 1, interval[1])]
+
+        if interval[0] < split_interval[0]:
+             #[  {
+             if interval[1] == split_interval[1]:
+                 #[  {  ]} - > [  ]{[  ]}
+                 return [(interval[0], split_interval[0] - 1),
+                         (split_interval[0], interval[1])]
+             elif interval[1] < split_interval[1]:
+                 #[  {  ]  } -> [  ]{[  ]  }
+                 return [(interval[0], split_interval[0] - 1),
+                         (split_interval[0], interval[1])]
+             else: #interval[1] > split_interval[1]
+                 #[  {  }  ] -> [  ][{  }][  ]
+                 return [(interval[0], split_interval[0] - 1),
+                         (split_interval[0], split_interval[1]),
+                         (split_interval[1] + 1, interval[1])]
+
+        if interval[0] > split_interval[0]:
+            #{  [
+            if interval[1] == split_interval[1]:
+                #{  [  ]}
+                return [interval]
+            elif interval[1] < split_interval[1]:
+                #{  [  ]  }
+                return [interval]
+            else: #interval[1] > split_interval[1]
+                #{  [  }  ] - > {  [  ]}[  ]
+                return [(interval[0], split_interval[1]),
+                        (split_interval[1] + 1, interval[1])]
+
+    def split_overlap(self, tagdict):
+        intervals = []
+        for k, v in tagdict.items():
+            #Split by exsiting intervals
+            tmpint = v
+            for i in intervals:
+                iterint = tmpint
+                tmpint = []
+                for st, e in iterint:
+                    tmpint.extend(self.split((st,e), i))
+            tagdict[k] = tmpint
+            #Add new intervals
+            intervals.extend(tmpint)
+        return tagdict
+
     def get_text(self, start=None, end=None, include_hidden_chars=True):
         tagdict = self.get_tags()
         if not start:
@@ -165,6 +258,8 @@ class PangoBuffer(gtk.TextBuffer):
         if not end:
             end = self.get_end_iter()
         txt = unicode(gtk.TextBuffer.get_text(self, start, end, True))
+        #Important step, split that no tags overlap
+        tagdict = self.split_overlap(tagdict)
         cuts = {}
         for k, v in tagdict.items():
             stag, etag = self.tag_to_markup(k)
@@ -237,11 +332,6 @@ class PangoBuffer(gtk.TextBuffer):
         for t in tags:
             self.remove_tag_from_selection(t)
 
-    def setup_default_tags(self):
-        self.italics = self.get_tags_from_attrs(None, None, [pango.AttrStyle('italic')])[0]
-        self.bold = self.get_tags_from_attrs(None, None, [pango.AttrWeight('bold')])[0]
-        self.underline = self.get_tags_from_attrs(None, None, [pango.AttrUnderline('single')])[0]
-
     def get_selection(self):
         bounds = self.get_selection_bounds()
         if not bounds:
@@ -300,6 +390,13 @@ class InteractivePangoBuffer(PangoBuffer):
         self.connect('changed', self._changed_cb)
         for w, tup in toggle_widget_alist:
             self.setup_widget(w, *tup)
+
+    def set_text(self, txt):
+        self.disconnect_by_func(self._changed_cb)
+        self.disconnect_by_func(self._mark_set_cb)
+        PangoBuffer.set_text(self, txt)
+        self.connect('changed', self._changed_cb)
+        self.connect('mark-set', self._mark_set_cb)
 
     def setup_widget_from_pango(self, widg, markupstring):
         """setup widget from a pango markup string"""
