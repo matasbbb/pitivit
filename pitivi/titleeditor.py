@@ -28,6 +28,7 @@ import gtk
 import pango
 import ges
 import gst
+from utils.timeline import SELECT
 from pitivi.configure import get_ui_dir, get_pixmap_dir
 from pitivi.utils.loggable import Loggable
 from pitivi.utils.signal import SignalGroup, Signallable
@@ -82,6 +83,14 @@ class TitleEditor(Signallable, Loggable):
         for setting in settings:
             self.settings[setting] = builder.get_object(setting)
         self.set_sensitive(False)
+
+    def _focusedTextView(self, widget, notused_event):
+        self.app.gui.timeline_ui.playhead_actions.set_sensitive(False)
+        self.app.gui.timeline_ui.selection_actions.set_sensitive(False)
+
+    def _unfocusedTextView(self, widget, notused_event):
+        self.app.gui.timeline_ui.playhead_actions.set_sensitive(True)
+        self.app.gui.timeline_ui.selection_actions.set_sensitive(True)
 
     def _backgroundColorButtonCb(self, widget):
         self.textarea.modify_base(self.textarea.get_state(), widget.get_color())
@@ -164,11 +173,11 @@ class TitleEditor(Signallable, Loggable):
 
     def _reset(self):
         #TODO: reset not only text
-        if self.markup_button.get_active():
-            self.markup_button.set_active(False)
-            self.pangobuffer.set_text("")
-            self.textbuffer.set_text("")
-            self._markupToggleCb(self.markup_button)
+        self.markup_button.set_active(False)
+        self.pangobuffer.set_text("")
+        self.textbuffer.set_text("")
+        #Set right buffer
+        self._markupToggleCb(self.markup_button)
 
     def set_source(self, source):
         self.source = None
@@ -193,6 +202,7 @@ class TitleEditor(Signallable, Loggable):
     def _insertEndCb(self, unused_button):
         self.info_bar_drag.hide()
         self.app.gui.timeline_ui.insertEnd([self.source])
+        self.app.gui.timeline_ui.timeline.selection.setToObj(self.source, SELECT)
 
     def _dndDragBeginCb(self, view, context):
         self.info("Title drag begin")

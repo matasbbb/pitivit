@@ -325,6 +325,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="wrap_mode">word</property>
+            <signal name="focus-in-event" handler="_focusedTextView" swapped="no"/>
+            <signal name="focus-out-event" handler="_unfocusedTextView" swapped="no"/>
           </object>
           <packing>
             <property name="expand">True</property>
