@@ -678,7 +678,8 @@ class EffectsPropertiesManager:
 
         self._current_effect_setting_ui = effect_set_ui
         element = self._current_effect_setting_ui.element
-        for prop in element.list_children_properties():
+        count = 0
+        for prop in element.list_children_properties(count):
             self._current_element_values[prop.name] = element.get_child_property(prop.name)
 
         return self.cache_dict[effect]

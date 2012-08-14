@@ -811,7 +811,8 @@ class GstElementSettingsWidget(gtk.VBox, Loggable):
         is_effect = False
         if isinstance(self.element, ges.TrackParseLaunchEffect):
             is_effect = True
-            props = [prop for prop in self.element.list_children_properties() if not prop.name in self.ignore]
+            count = 0
+            props = [prop for prop in self.element.list_children_properties(count) if not prop.name in self.ignore]
         else:
             props = [prop for prop in gobject.list_properties(self.element) if not prop.name in self.ignore]
         if not props:
