@@ -74,14 +74,16 @@ class TitleEditor(Signallable, Loggable):
         self.info_bar_create = builder.get_object("infobar1")
         self.info_bar_drag = builder.get_object("infobar2")
         self.drag_item = builder.get_object("drag_item")
-        buttons = ["bold", "italic", "underline", "font", "font_fore_color", "font_back_color"]
+        buttons = ["bold", "italic", "underline", "font", "font_fore_color", "font_back_color", "back_color"]
         for button in buttons:
             self.bt[button] = builder.get_object(button)
-        #FIXME Find workaround for GtkComboBoxText
-        #settings = ["valignment","halignment","xpos","ypos"]
-        settings = ["xpos", "ypos"]
+        settings = ["valignment", "halignment", "xpos", "ypos"]
         for setting in settings:
             self.settings[setting] = builder.get_object(setting)
+        for align in ["Position", "Top", "Center", "Bottom", "Baseline"]:
+            self.settings["valignment"].append(align.lower(), align)
+        for align in ["Position", "Left", "Center", "Right"]:
+            self.settings["halignment"].append(align.lower(), align)
         self.set_sensitive(False)
 
     def _focusedTextView(self, widget, notused_event):
@@ -94,16 +96,24 @@ class TitleEditor(Signallable, Loggable):
 
     def _backgroundColorButtonCb(self, widget):
         self.textarea.modify_base(self.textarea.get_state(), widget.get_color())
+        color = widget.get_rgba()
+        color_int = 0
+        color_int += int(color.red   * 255) * 256**2
+        color_int += int(color.green * 255) * 256**1
+        color_int += int(color.blue  * 255) * 256**0
+        color_int += int(color.alpha * 255) * 256**3
+        self.debug("Setting title background color to %s", hex(color_int))
+        self.source.set_background(color_int)
 
     def _frontTextColorButtonCb(self, widget):
-        a, t, s = pango.parse_markup("<span color='" + widget.get_color().to_string() + "'>color</span>", u'\x00')
+        suc, a, t, s = pango.parse_markup("<span color='" + widget.get_color().to_string() + "'>color</span>", -1, u'\x00')
         ai = a.get_iterator()
         font, lang, attrs = ai.get_font()
         tags = self.pangobuffer.get_tags_from_attrs(None, None, attrs)
         self.pangobuffer.apply_tag_to_selection(tags[0])
 
     def _backTextColorButtonCb(self, widget):
-        a, t, s = pango.parse_markup("<span background='" + widget.get_color().to_string() + "'>color</span>", u'\x00')
+        suc, a, t, s = pango.parse_markup("<span background='" + widget.get_color().to_string() + "'>color</span>", -1, u'\x00')
         ai = a.get_iterator()
         font, lang, attrs = ai.get_font()
         tags = self.pangobuffer.get_tags_from_attrs(None, None, attrs)
@@ -111,8 +121,10 @@ class TitleEditor(Signallable, Loggable):
 
     def _fontButtonCb(self, widget):
         font_desc = widget.get_font_name().split(" ")
-        text = "<span font_desc='" + widget.get_font_name() + "'>text</span>"
-        a, t, s = pango.parse_markup(text, u'\x00')
+        font_face = " ".join(font_desc[:-1])
+        font_size = str(int(font_desc[-1]) * 1024)
+        text = "<span face='" + font_face + "'><span size='" + font_size + "'>text</span></span>"
+        suc, a, t, s = pango.parse_markup(text, -1, u'\x00')
         ai = a.get_iterator()
         font, lang, attrs = ai.get_font()
         tags = self.pangobuffer.get_tags_from_attrs(font, None, attrs)
@@ -120,6 +132,8 @@ class TitleEditor(Signallable, Loggable):
             self.pangobuffer.apply_tag_to_selection(tag)
 
     def _markupToggleCb(self, markup_button):
+        self.textbuffer.disconnect_by_func(self._updateSourceText)
+        self.pangobuffer.disconnect_by_func(self._updateSourceText)
         if markup_button.get_active():
             for name in self.bt:
                 self.bt[name].set_sensitive(False)
@@ -132,6 +146,8 @@ class TitleEditor(Signallable, Loggable):
                 self.textbuffer.get_text(self.textbuffer.get_start_iter(),
                                          self.textbuffer.get_end_iter(), True))
             self.textarea.set_buffer(self.pangobuffer)
+        self.textbuffer.connect("changed", self._updateSourceText)
+        self.pangobuffer.connect("changed", self._updateSourceText)
 
     def set_sensitive(self, sensitive):
         if sensitive:
@@ -143,12 +159,25 @@ class TitleEditor(Signallable, Loggable):
             self.editing_box.set_sensitive(False)
 
     def _updateFromSource(self):
-        #TODO: update not only text
         if self.source is not None:
+            self.log("Title text set to %s", self.source.get_text())
             self.pangobuffer.set_text(self.source.get_text())
-            for name, gtk_obj in self.settings.items():
-                if (isinstance(gtk_obj, gtk.SpinButton)):
-                    gtk_obj.set_text(str(getattr(self.source.props, name)))
+            self.textbuffer.set_text(self.source.get_text())
+            self.settings['xpos'].set_value(self.source.get_xpos())
+            self.settings['ypos'].set_value(self.source.get_ypos())
+            self.settings['valignment'].set_active_id(self.source.get_valignment().value_name)
+            self.settings['halignment'].set_active_id(self.source.get_halignment().value_name)
+            if hasattr(self.source, "get_background"):
+                self.bt["back_color"].set_visible(True)
+                color = self.source.get_background()
+                color = gtk.gdk.RGBA(color / 256**2 % 256 / 255.,
+                                     color / 256**1 % 256 / 255.,
+                                     color / 256**0 % 256 / 255.,
+                                     color / 256**3 % 256 / 255.)
+                self.bt["back_color"].set_rgba(color)
+            else:
+                self.bt["back_color"].set_visible(False)
+
 
     def _updateSourceText(self, updated_obj):
         if self.source is not None:
@@ -158,18 +187,27 @@ class TitleEditor(Signallable, Loggable):
                                                 True)
             else:
                 text = self.pangobuffer.get_text()
+            self.log("Source text updated to %s", text)
             self.source.set_text(text)
+            if not self.info_bar_drag.get_visible():
+                self.app.gui.timeline_ui._seeker.flush()
 
     def _updateSource(self, updated_obj):
         if self.source is not None:
             for name, obj in self.settings.items():
                 if obj == updated_obj:
-                    self.source.set_property(name, obj.get_value())
-                    #FIXME should update gtk objects
+                    if name == "valignment":
+                       self.source.set_valignment(getattr(ges.TextVAlign, obj.get_active_id().upper()))
+                    if name == "halignment":
+                       self.source.set_halignment(getattr(ges.TextHAlign, obj.get_active_id().upper()))
                     if name == "xpos":
-                       self.source.set_halignment("position")
+                       self.settings["halignment"].set_active_id("position")
+                       self.source.set_xpos(obj.get_value())
                     if name == "ypos":
-                       self.source.set_valignment("position")
+                       self.settings["valignment"].set_active_id("position")
+                       self.source.set_ypos(obj.get_value())
+                    if not self.info_bar_drag.get_visible():
+                        self.app.gui.timeline_ui._seeker.flush()
                     return
 
     def _reset(self):
@@ -181,6 +219,7 @@ class TitleEditor(Signallable, Loggable):
         self._markupToggleCb(self.markup_button)
 
     def set_source(self, source):
+        self.debug("Source set to %s", str(source))
         self.source = None
         self._reset()
         if source is None:
