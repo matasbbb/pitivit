@@ -75,11 +75,10 @@ class PangoBuffer(gtk.TextBuffer):
 
     def set_text(self, txt):
         gtk.TextBuffer.set_text(self, "")
-        try:
-            self.parsed, self.txt, self.separator = pango.parse_markup(txt, u'\x00')
-        except:
+        suc, self.parsed, self.txt, self.separator = pango.parse_markup(txt, -1, u'\x00')
+        if not suc:
             txt = xml.sax.saxutils.escape(txt)
-            self.parsed, self.txt, self.separator = pango.parse_markup(txt, u'\x00')
+            suc, self.parsed, self.txt, self.separator = pango.parse_markup(txt, -1, u'\x00')
         self.attrIter = self.parsed.get_iterator()
         self.add_iter_to_buffer()
         while self.attrIter.next():
@@ -93,7 +92,7 @@ class PangoBuffer(gtk.TextBuffer):
         if tags:
             self.insert_with_tags(self.get_end_iter(), text, *tags)
         else:
-            self.insert_with_tags(self.get_end_iter(), text)
+            self.insert(self.get_end_iter(), text)
 
     def get_tags_from_attrs(self, font, lang, attrs):
         tags = []
@@ -165,7 +164,7 @@ class PangoBuffer(gtk.TextBuffer):
             start = self.get_start_iter()
         if not end:
             end = self.get_end_iter()
-        txt = unicode(gtk.TextBuffer.get_text(self, start, end))
+        txt = unicode(gtk.TextBuffer.get_text(self, start, end, True))
         cuts = {}
         for k, v in tagdict.items():
             stag, etag = self.tag_to_markup(k)
@@ -246,7 +245,7 @@ class PangoBuffer(gtk.TextBuffer):
     def get_selection(self):
         bounds = self.get_selection_bounds()
         if not bounds:
-            iter = self.get_iter_at_mark(self.insert)
+            iter = self.get_iter_at_mark(self.insert_mark)
             if iter.inside_word():
                 start_pos = iter.get_offset()
                 iter.forward_word_end()
@@ -296,7 +295,7 @@ class InteractivePangoBuffer(PangoBuffer):
             normal_button.connect('clicked', lambda *args: self.remove_all_tags())
         self.tag_widgets = {}
         self.internal_toggle = False
-        self.insert = self.get_insert()
+        self.insert_mark = self.get_insert()
         self.connect('mark-set', self._mark_set_cb)
         self.connect('changed', self._changed_cb)
         for w, tup in toggle_widget_alist:
@@ -305,7 +304,7 @@ class InteractivePangoBuffer(PangoBuffer):
     def setup_widget_from_pango(self, widg, markupstring):
         """setup widget from a pango markup string"""
         #font = pango.FontDescription(fontstring)
-        a, t, s = pango.parse_markup(markupstring, u'\x00')
+        suc, a, t, s = pango.parse_markup(markupstring, -1, u'\x00')
         ai = a.get_iterator()
         font, lang, attrs = ai.get_font()
         return self.setup_widget(widg, font, attrs)
@@ -352,7 +351,7 @@ class InteractivePangoBuffer(PangoBuffer):
         # If our insertion point has a mark, we want to apply the tag
         # each time the user types...
         old_itr = self.get_iter_at_mark(self.last_mark)
-        insert_itr = self.get_iter_at_mark(self.insert)
+        insert_itr = self.get_iter_at_mark(self.insert_mark)
         if old_itr != insert_itr:
             # Use the state of our widgets to determine what
             # properties to apply...
