@@ -26,19 +26,37 @@ Shows title editor
 import os
 import gtk
 import pango
-import pango
-from pitivi.configure import get_ui_dir
+import ges
+import gst
+from pitivi.configure import get_ui_dir, get_pixmap_dir
+from pitivi.utils.loggable import Loggable
+from pitivi.utils.signal import SignalGroup, Signallable
 from utils.text_buffer_markup import InteractivePangoBuffer
+INVISIBLE = gtk.gdk.pixbuf_new_from_file(os.path.join(get_pixmap_dir(), "invisible.png"))
 
-class TitleEditor():
 
-    def __init__(self):
+class TitleEditor(Signallable, Loggable):
+    __signals__ = {}
+
+    def __init__(self, instance, uimap):
+        Loggable.__init__(self)
+        Signallable.__init__(self)
+        self.app = instance
         self.bt = {}
+        self.settings = {}
         self._createUI()
         self.textbuffer = gtk.TextBuffer()
         self.pangobuffer = InteractivePangoBuffer()
         self.textarea.set_buffer(self.pangobuffer)
 
+        #Conect updates
+        self.textbuffer.connect("changed", self._updateSourceText)
+        self.pangobuffer.connect("changed", self._updateSourceText)
+
+        #Connect drag, no drag for now
+        #self.drag_item.drag_source_set(gtk.gdk.BUTTON1_MASK, [], gtk.gdk.ACTION_COPY)
+        #self.drag_item.connect("drag_begin", self._dndDragBeginCb)
+        #self.drag_item.connect("drag_data_get", self._dndDragDataGetCb)
         #Connect buttons
         self.pangobuffer.setup_widget_from_pango(self.bt["bold"], "<b>bold</b>")
         self.pangobuffer.setup_widget_from_pango(self.bt["italic"], "<i>italic</i>")
@@ -49,11 +67,21 @@ class TitleEditor():
         builder.add_from_file(os.path.join(get_ui_dir(), "titleeditor.ui"))
         builder.connect_signals(self)
         self.widget = builder.get_object("box1")
+        self.editing_box = builder.get_object("editing_box")
         self.textarea = builder.get_object("textview1")
-        buttons = ["bold","italic","underline","font","font_fore_color","font_back_color"]
+        self.markup_button = builder.get_object("markupToggle")
+        self.info_bar_create = builder.get_object("infobar1")
+        self.info_bar_drag = builder.get_object("infobar2")
+        self.drag_item = builder.get_object("drag_item")
+        buttons = ["bold", "italic", "underline", "font", "font_fore_color", "font_back_color"]
         for button in buttons:
             self.bt[button] = builder.get_object(button)
-        print self.bt
+        #FIXME Find workaround for GtkComboBoxText
+        #settings = ["valignment","halignment","xpos","ypos"]
+        settings = ["xpos", "ypos"]
+        for setting in settings:
+            self.settings[setting] = builder.get_object(setting)
+        self.set_sensitive(False)
 
     def _backgroundColorButtonCb(self, widget):
         self.textarea.modify_base(self.textarea.get_state(), widget.get_color())
@@ -72,7 +100,6 @@ class TitleEditor():
         tags = self.pangobuffer.get_tags_from_attrs(None, None, attrs)
         self.pangobuffer.apply_tag_to_selection(tags[0])
 
-
     def _fontButtonCb(self, widget):
         font_desc = widget.get_font_name().split(" ")
         text = "<span font_desc='" + widget.get_font_name() + "'>text</span>"
@@ -80,7 +107,6 @@ class TitleEditor():
         ai = a.get_iterator()
         font, lang, attrs = ai.get_font()
         tags = self.pangobuffer.get_tags_from_attrs(font, None, attrs)
-        print tags
         for tag in tags:
             self.pangobuffer.apply_tag_to_selection(tag)
 
@@ -97,3 +123,87 @@ class TitleEditor():
                 self.textbuffer.get_text(self.textbuffer.get_start_iter(),
                                          self.textbuffer.get_end_iter()))
             self.textarea.set_buffer(self.pangobuffer)
+
+    def set_sensitive(self, sensitive):
+        if sensitive:
+            self.info_bar_create.hide()
+            self.editing_box.set_sensitive(True)
+        else:
+            self.info_bar_create.show()
+            self.info_bar_drag.hide()
+            self.editing_box.set_sensitive(False)
+
+    def _updateFromSource(self):
+        #TODO: update not only text
+        if self.source is not None:
+            self.pangobuffer.set_text(self.source.get_text())
+            for name, gtk_obj in self.settings.items():
+                if (isinstance(gtk_obj, gtk.SpinButton)):
+                    gtk_obj.set_text(str(getattr(self.source.props, name)))
+
+    def _updateSourceText(self, updated_obj):
+        if self.source is not None:
+            if self.markup_button.get_active():
+                text = self.textbuffer.get_text(self.textbuffer.get_start_iter(),
+                                                self.textbuffer.get_end_iter())
+            else:
+                text = self.pangobuffer.get_text()
+            self.source.set_text(text)
+
+    def _updateSource(self, updated_obj):
+        if self.source is not None:
+            for name, obj in self.settings.items():
+                if obj == updated_obj:
+                    self.source.set_property(name, obj.get_value())
+                    #FIXME should update gtk objects
+                    if name == "xpos":
+                       self.source.set_halignment("position")
+                    if name == "ypos":
+                       self.source.set_valignment("position")
+                    return
+
+    def _reset(self):
+        #TODO: reset not only text
+        if self.markup_button.get_active():
+            self.markup_button.set_active(False)
+            self.pangobuffer.set_text("")
+            self.textbuffer.set_text("")
+            self._markupToggleCb(self.markup_button)
+
+    def set_source(self, source):
+        self.source = None
+        self._reset()
+        if source is None:
+            self.set_sensitive(False)
+        else:
+            self.source = source
+            self._updateFromSource()
+            self.set_sensitive(True)
+
+    def _createCb(self, unused_button):
+        source = ges.TimelineTitleSource()
+        source.set_text("")
+        source.set_duration(long(gst.SECOND * 5))
+        #Show drag only if created new source
+        self.info_bar_drag.show()
+        self.set_source(source)
+        #Media library uses DiscovererInfo, while TimelineTitleSource can't have it..
+        #self.app.gui.timeline_ui._project.medialibrary.addSources([self.source])
+
+    def _insertEndCb(self, unused_button):
+        self.info_bar_drag.hide()
+        self.app.gui.timeline_ui.insertEnd([self.source])
+
+    def _dndDragBeginCb(self, view, context):
+        self.info("Title drag begin")
+        if self.source is None:
+            context.drag_abort(int(time.time()))
+        else:
+            context.set_icon_pixbuf(gtk.STOCK_DND)
+
+    def _dndDragDataGetCb(self, unused_widget_context, selection, targettype, unused_eventtime):
+        self.info("Title drag data get, type:%d", targettype)
+        if self.source is None:
+            return
+        selection.set(selection.target, 8, "fake")
+        context.set_icon_pixbuf(INVISIBLE, 0, 0)
