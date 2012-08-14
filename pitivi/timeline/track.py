@@ -598,12 +598,27 @@ class TrackObject(View, goocanvas.Group, Zoomable, Loggable):
                 self.app.gui.switchContextTab("title editor")
                 self.app.gui.title_editor.set_source(self.element.get_timeline_object())
             else:
+                if self.element.get_track().get_property("track_type") == ges.TRACK_TYPE_VIDEO:
+                    has = False
+                    tlobj = self.element.get_timeline_object()
+                    trackobjs = tlobj.get_track_objects()
+                    for trackobj in trackobjs:
+                       if isinstance(trackobj, ges.TrackTextOverlay):
+                          has = True
+                          title = trackobj
+                    if not has:
+                        title = ges.TrackTextOverlay()
+                        title.set_text("")
+                        title.set_start(self.element.get_start())
+                        title.set_duration(self.element.get_duration())
+                        self.element.get_timeline_object().add_track_object(title)
+                        self.element.get_track().add_object(title)
+                    self.app.gui.title_editor.set_source(title)
                 self.app.gui.trans_list.deactivate()
                 self.app.gui.switchContextTab()
             self._selec_indic.props.visibility = goocanvas.ITEM_VISIBLE
         else:
-            if isinstance(self.element, ges.TrackTitleSource):
-                self.app.gui.title_editor.set_source(None)
+            self.app.gui.title_editor.set_source(None)
             self._selec_indic.props.visibility = goocanvas.ITEM_INVISIBLE
 
     def _update(self):
