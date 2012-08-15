@@ -28,10 +28,12 @@ import gtk
 import pango
 import ges
 import gst
+import gobject
 from utils.timeline import SELECT
 from pitivi.configure import get_ui_dir, get_pixmap_dir
 from pitivi.utils.loggable import Loggable
 from pitivi.utils.signal import SignalGroup, Signallable
+from pitivi.utils.pipeline import Seeker
 from utils.text_buffer_markup import InteractivePangoBuffer
 INVISIBLE = gtk.gdk.pixbuf_new_from_file(os.path.join(get_pixmap_dir(), "invisible.png"))
 
@@ -45,6 +47,16 @@ class TitleEditor(Signallable, Loggable):
         self.app = instance
         self.bt = {}
         self.settings = {}
+        self.source = None
+        self.created = False
+        self.seeker = Seeker()
+
+        #Drag attributes
+        self._drag_events = []
+        self._drag_connected = False
+        self._tab_opened = False
+
+        #Creat UI
         self._createUI()
         self.textbuffer = gtk.TextBuffer()
         self.pangobuffer = InteractivePangoBuffer()
@@ -158,6 +170,8 @@ class TitleEditor(Signallable, Loggable):
             self.info_bar_drag.hide()
             self.editing_box.set_sensitive(False)
 
+        self.preview(sensitive)
+
     def _updateFromSource(self):
         if self.source is not None:
             self.log("Title text set to %s", self.source.get_text())
@@ -189,8 +203,7 @@ class TitleEditor(Signallable, Loggable):
                 text = self.pangobuffer.get_text()
             self.log("Source text updated to %s", text)
             self.source.set_text(text)
-            if not self.info_bar_drag.get_visible():
-                self.app.gui.timeline_ui._seeker.flush()
+            self.preview()
 
     def _updateSource(self, updated_obj):
         if self.source is not None:
@@ -206,8 +219,7 @@ class TitleEditor(Signallable, Loggable):
                     if name == "ypos":
                        self.settings["valignment"].set_active_id("position")
                        self.source.set_ypos(obj.get_value())
-                    if not self.info_bar_drag.get_visible():
-                        self.app.gui.timeline_ui._seeker.flush()
+                    self.preview()
                     return
 
     def _reset(self):
@@ -218,10 +230,11 @@ class TitleEditor(Signallable, Loggable):
         #Set right buffer
         self._markupToggleCb(self.markup_button)
 
-    def set_source(self, source):
+    def set_source(self, source, created=False):
         self.debug("Source set to %s", str(source))
         self.source = None
         self._reset()
+        self.created = created
         if source is None:
             self.set_sensitive(False)
         else:
@@ -235,7 +248,7 @@ class TitleEditor(Signallable, Loggable):
         source.set_duration(long(gst.SECOND * 5))
         #Show drag only if created new source
         self.info_bar_drag.show()
-        self.set_source(source)
+        self.set_source(source, True)
         #Media library uses DiscovererInfo, while TimelineTitleSource can't have it..
         #self.app.gui.timeline_ui._project.medialibrary.addSources([self.source])
 
@@ -243,6 +256,81 @@ class TitleEditor(Signallable, Loggable):
         self.info_bar_drag.hide()
         self.app.gui.timeline_ui.insertEnd([self.source])
         self.app.gui.timeline_ui.timeline.selection.setToObj(self.source, SELECT)
+        #After insertion consider as not created
+        self.created = False
+
+    def preview(self, show=True):
+       if not show:
+            #Disconect
+            if self._drag_connected:
+                self.app.gui.viewer.target.disconnect_by_func(self.drag_notify_event)
+                self.app.gui.viewer.target.disconnect_by_func(self.drag_press_event)
+                self.app.gui.viewer.target.disconnect_by_func(self.drag_release_event)
+                self._drag_connected = False
+       elif self.source is not None and not self.created:
+            self.seeker.flush()
+            if not self._drag_connected and self._tab_opened:
+                self._drag_connected = True
+                self.app.gui.viewer.target.connect("motion-notify-event", self.drag_notify_event)
+                self.app.gui.viewer.target.connect("button-press-event", self.drag_press_event)
+                self.app.gui.viewer.target.connect("button-release-event", self.drag_release_event)
+
+
+    def drag_press_event(self, widget, event):
+        if event.button == 1:
+            self._drag_events = [(event.x, event.y)]
+            #Update drag by drag event change, but not too often
+            self.timeout = gobject.timeout_add(100, self.drag_update_event)
+            #If drag goes out for 0.3 second, and do not come back, consider drag end
+            self._drag_updated = True
+            self.timeout = gobject.timeout_add(1000, self.drag_posible_end_event)
+
+    def drag_posible_end_event(self):
+        if self._drag_updated:
+            #Updated during last timeout, wait more
+            self._drag_updated = False
+            return True
+        else:
+            #Not updated - posibly out of bounds, stop drag
+            self.log("Drag timeout")
+            self._drag_events = []
+            return False
+
+    def drag_update_event(self):
+        if len(self._drag_events) > 0:
+            st = self._drag_events[0]
+            self._drag_events = [self._drag_events[-1]]
+            e = self._drag_events[0]
+            xdiff = e[0] - st[0]
+            ydiff = e[1] - st[1]
+            xdiff /= self.app.gui.viewer.target.get_allocated_width()
+            ydiff /= self.app.gui.viewer.target.get_allocated_height()
+            newxpos = self.settings["xpos"].get_value() + xdiff
+            newypos = self.settings["ypos"].get_value() + ydiff
+            self.settings["xpos"].set_value(newxpos)
+            self.settings["ypos"].set_value(newypos)
+            self.seeker.flush()
+            return True
+        else:
+            return False
+
+    def drag_notify_event(self, widget, event):
+        if len(self._drag_events) > 0 and event.get_state() & gtk.gdk.BUTTON1_MASK:
+            self._drag_updated = True
+            self._drag_events.append((event.x,event.y))
+            st = self._drag_events[0]
+            e = self._drag_events[-1]
+
+    def drag_release_event(self, widget, event):
+        self._drag_events = []
+
+    def tab_switched(self, unused_notebook, arg1, arg2):
+        if arg2 == 2:
+            self._tab_opened = True
+            self.preview(True)
+        else:
+            self._tab_opened = False
+            self.preview(False)
 
     def _dndDragBeginCb(self, view, context):
         self.info("Title drag begin")
