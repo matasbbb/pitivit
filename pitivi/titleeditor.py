@@ -29,6 +29,9 @@ import pango
 import ges
 import gst
 import gobject
+
+from gettext import gettext as _
+
 from utils.timeline import SELECT
 from pitivi.configure import get_ui_dir, get_pixmap_dir
 from pitivi.utils.loggable import Loggable
@@ -66,10 +69,6 @@ class TitleEditor(Signallable, Loggable):
         self.textbuffer.connect("changed", self._updateSourceText)
         self.pangobuffer.connect("changed", self._updateSourceText)
 
-        #Connect drag, no drag for now
-        #self.drag_item.drag_source_set(gtk.gdk.BUTTON1_MASK, [], gtk.gdk.ACTION_COPY)
-        #self.drag_item.connect("drag_begin", self._dndDragBeginCb)
-        #self.drag_item.connect("drag_data_get", self._dndDragDataGetCb)
         #Connect buttons
         self.pangobuffer.setup_widget_from_pango(self.bt["bold"], "<b>bold</b>")
         self.pangobuffer.setup_widget_from_pango(self.bt["italic"], "<i>italic</i>")
@@ -84,18 +83,24 @@ class TitleEditor(Signallable, Loggable):
         self.textarea = builder.get_object("textview1")
         self.markup_button = builder.get_object("markupToggle")
         self.info_bar_create = builder.get_object("infobar1")
-        self.info_bar_drag = builder.get_object("infobar2")
-        self.drag_item = builder.get_object("drag_item")
+        self.info_bar_insert = builder.get_object("infobar2")
         buttons = ["bold", "italic", "underline", "font", "font_fore_color", "font_back_color", "back_color"]
         for button in buttons:
             self.bt[button] = builder.get_object(button)
         settings = ["valignment", "halignment", "xpos", "ypos"]
         for setting in settings:
             self.settings[setting] = builder.get_object(setting)
-        for align in ["Position", "Top", "Center", "Bottom", "Baseline"]:
-            self.settings["valignment"].append(align.lower(), align)
-        for align in ["Position", "Left", "Center", "Right"]:
-            self.settings["halignment"].append(align.lower(), align)
+        for n, en in {_("Custom"):"position",
+                      _("Top"):"top",
+                      _("Center"):"center",
+                      _("Bottom"):"bottom",
+                      _("Baseline"):"baseline"}.items():
+            self.settings["valignment"].append(en, n)
+        for n, en in {_("Custom"):"position",
+                      _("Left"):"left",
+                      _("Center"):"center",
+                      _("Right"):"right"}.items():
+            self.settings["halignment"].append(en, n)
         self.set_sensitive(False)
 
     def _focusedTextView(self, widget, notused_event):
@@ -167,7 +172,7 @@ class TitleEditor(Signallable, Loggable):
             self.editing_box.set_sensitive(True)
         else:
             self.info_bar_create.show()
-            self.info_bar_drag.hide()
+            self.info_bar_insert.hide()
             self.editing_box.set_sensitive(False)
 
         self.preview(sensitive)
@@ -211,8 +216,10 @@ class TitleEditor(Signallable, Loggable):
                 if obj == updated_obj:
                     if name == "valignment":
                        self.source.set_valignment(getattr(ges.TextVAlign, obj.get_active_id().upper()))
+                       self.settings["ypos"].set_visible(obj.get_active_id() == "position")
                     if name == "halignment":
                        self.source.set_halignment(getattr(ges.TextHAlign, obj.get_active_id().upper()))
+                       self.settings["xpos"].set_visible(obj.get_active_id() == "position")
                     if name == "xpos":
                        self.settings["halignment"].set_active_id("position")
                        self.source.set_xpos(obj.get_value())
@@ -246,14 +253,12 @@ class TitleEditor(Signallable, Loggable):
         source = ges.TimelineTitleSource()
         source.set_text("")
         source.set_duration(long(gst.SECOND * 5))
-        #Show drag only if created new source
-        self.info_bar_drag.show()
+        #Show insert infobar only if created new source
+        self.info_bar_insert.show()
         self.set_source(source, True)
-        #Media library uses DiscovererInfo, while TimelineTitleSource can't have it..
-        #self.app.gui.timeline_ui._project.medialibrary.addSources([self.source])
 
     def _insertEndCb(self, unused_button):
-        self.info_bar_drag.hide()
+        self.info_bar_insert.hide()
         self.app.gui.timeline_ui.insertEnd([self.source])
         self.app.gui.timeline_ui.timeline.selection.setToObj(self.source, SELECT)
         #After insertion consider as not created
@@ -270,6 +275,7 @@ class TitleEditor(Signallable, Loggable):
        elif self.source is not None and not self.created:
             self.seeker.flush()
             if not self._drag_connected and self._tab_opened:
+                #If source is in timeline and title tab opened enable title drag
                 self._drag_connected = True
                 self.app.gui.viewer.target.connect("motion-notify-event", self.drag_notify_event)
                 self.app.gui.viewer.target.connect("button-press-event", self.drag_press_event)
@@ -331,17 +337,3 @@ class TitleEditor(Signallable, Loggable):
         else:
             self._tab_opened = False
             self.preview(False)
-
-    def _dndDragBeginCb(self, view, context):
-        self.info("Title drag begin")
-        if self.source is None:
-            context.drag_abort(int(time.time()))
-        else:
-            context.set_icon_pixbuf(gtk.STOCK_DND)
-
-    def _dndDragDataGetCb(self, unused_widget_context, selection, targettype, unused_eventtime):
-        self.info("Title drag data get, type:%d", targettype)
-        if self.source is None:
-            return
-        selection.set(selection.target, 8, "fake")
-        context.set_icon_pixbuf(INVISIBLE, 0, 0)
